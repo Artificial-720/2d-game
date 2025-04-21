@@ -17,6 +17,7 @@ typedef struct {
   unsigned int vbo;
   unsigned int ibo;
   unsigned int *textures;
+  unsigned int boundTexture;
   int texturesCount;
   int indicesCount;
   int maxTextures;

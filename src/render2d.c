@@ -88,7 +88,10 @@ int r2dCreateTexture(Render2d *render, const char *filename, unsigned int *textu
 }
 
 void r2dDrawSprite(Render2d *render, Sprite sprite) {
-  glBindTexture(GL_TEXTURE_2D, sprite.texture);
+  if (render->boundTexture != sprite.texture) {
+    glBindTexture(GL_TEXTURE_2D, sprite.texture);
+    render->boundTexture = sprite.texture;
+  }
 
   // populate uniforms
   int modelLoc = glGetUniformLocation(render->program, "model");
