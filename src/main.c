@@ -14,24 +14,23 @@ void gameInit() {
   ecsLoadTexture("assets/image.png", &textureId);
   // add a sprite
   Sprite sprite = {.x = 0, .y = 0, .width = 50, .height = 50, .texture = textureId};
-  ecsAddComponetSprite(box, sprite);
+  ecsAddComponentSprite(box, sprite);
   Transform transform = {.position = (vec3){0, 50, 0}};
-  ecsAddComponetTransform(box, transform);
+  ecsAddComponentTransform(box, transform);
+  Rigidbody rb = {.velocity = (vec3){0, 0, 0}};
+  ecsAddComponentRigidbody(box, rb);
 
   sprite.x = 100;
-  ecsAddComponetSprite(ecsCreateEntity(), sprite);
+  Entity box2 = ecsCreateEntity();
+  ecsAddComponentSprite(box2, sprite);
   transform.position.x = 100;
-  ecsAddComponetTransform(box, transform);
+  ecsAddComponentTransform(box2, transform);
+  ecsAddComponentRigidbody(box2, rb);
 
 }
 
 
 int main() {
-  // init ecs
-  // while running
-  // update
-  // terminate ecs
-
   int screenWidth = 1028;
   int screenHeight = 720;
   GLFWwindow *window;
@@ -46,6 +45,9 @@ int main() {
     return 0;
   }
 
+  unsigned int sig = ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY);
+  ecsRegisterSystem(sig, ecsPhysics);
+
   gameInit();
 
 
@@ -54,19 +56,13 @@ int main() {
     double now = glfwGetTime();
     double deltatime = now - previousTime;
     previousTime = now;
-    printf("fps: %f\n", 1.0f / deltatime); // not perfect but works for now
+    // printf("fps: %f\n", 1.0f / deltatime); // not perfect but works for now
 
-    glfwPollEvents();
-
-
-    // update for each system
 
     // user input
-    // update game
-    // render
+    glfwPollEvents();
 
     ecsUpdate(deltatime);
-
     ecsRender();
 
     glfwSwapBuffers(window);
