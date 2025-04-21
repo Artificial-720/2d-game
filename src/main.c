@@ -9,6 +9,7 @@
 #define WORLD_WIDTH 20
 #define WORLD_HEIGHT 10
 #define TILE_SIZE 50
+#define PLAYER_MOVEMENT_SPEED 150
 
 typedef struct {
   int id;
@@ -61,11 +62,18 @@ void initGame() {
   r2dCreateTexture(render, "assets/image.png", &textureDirt);
 }
 
+float yvelocity = 0.0f;
 void update(double deltatime) {
   (void)deltatime;
-  gameState.player.x += deltatime * 4;
+  gameState.player.x += deltatime * (PLAYER_MOVEMENT_SPEED * velocity);
 
-  
+  // gravity
+  yvelocity += -(500) * deltatime;
+  gameState.player.y += deltatime * (yvelocity);
+  if (gameState.player.y < 255) {
+    yvelocity = 0;
+  }
+  gameState.player.y = clamp(gameState.player.y, 250, 5000);
 }
 
 
@@ -100,6 +108,12 @@ void userInput(GLFWwindow *window) {
   if (keyState == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
   }
+
+  keyState = glfwGetKey(window, GLFW_KEY_SPACE);
+  if (keyState == GLFW_PRESS) {
+    yvelocity += 75;
+  }
+
 
   // keyState = glfwGetKey(window, GLFW_KEY_W);
   int keyStateA = glfwGetKey(window, GLFW_KEY_A);
