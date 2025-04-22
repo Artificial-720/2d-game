@@ -71,6 +71,8 @@ Entity ecsCreateEntity() {
   Entity e = entityCount;
   entityCount++;
 
+  entities[e] = 0;
+
   return e;
 }
 
@@ -105,7 +107,7 @@ void ecsUpdate(double deltatime) {
     //   system.systemCallback(system.entities[j]);
     // }
     for (int j = 0; j < entityCount; j++) {
-      if (entities[j] & system.signature) {
+      if ((entities[j] & system.signature) == system.signature) {
         system.systemCallback(j, deltatime);
       }
     }
@@ -131,8 +133,16 @@ void ecsRegisterSystem(int signature, void (*systemCallback)(Entity, double)) {
 }
 
 void ecsPhysics(Entity entity, double deltatime) {
-  printf("hello from ecsPhysics\n");
-  transforms[entity].position.y -= 100 * deltatime;
+  printf("hello from ecsPhysics %d sig: %x\n", entity, entities[entity]);
+  // transforms[entity].position.y -= 100 * deltatime;
+  // Gravity
+  rigidbodies[entity].acceleration.y -= 150 * deltatime;
+
+  rigidbodies[entity].velocity.y += rigidbodies[entity].acceleration.y * deltatime;
+  rigidbodies[entity].velocity.x += rigidbodies[entity].acceleration.x * deltatime;
+
+  transforms[entity].position.y += rigidbodies[entity].velocity.y * deltatime;
+  transforms[entity].position.x += rigidbodies[entity].velocity.x * deltatime;
 }
 
 unsigned int ecsGetSignature(enum componetId id) {
@@ -159,4 +169,16 @@ void ecsAddComponentSprite(Entity entity, Sprite sprite) {
   assert(sprites);
   entities[entity] ^= ecsGetSignature(SPRITE);
   sprites[entity] = sprite;
+}
+
+void ecsAddComponentController(Entity entity) {
+  entities[entity] ^= ecsGetSignature(CONTROLLER);
+}
+
+Transform *ecsGetTransform(Entity entity) {
+  return &transforms[entity];
+}
+
+Rigidbody *ecsGetRigidbody(Entity entity) {
+  return &rigidbodies[entity];
 }

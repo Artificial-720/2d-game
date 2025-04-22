@@ -3,6 +3,7 @@
 
 #include "render2d.h"
 #include "math.h"
+#include "controls.h"
 
 typedef struct {
   vec3 velocity;
@@ -16,7 +17,7 @@ typedef struct {
 } Transform;
 
 enum componetId {
-  RIGIDBODY, TRANSFORM, SPRITE
+  RIGIDBODY, TRANSFORM, SPRITE, CONTROLLER
 };
 
 unsigned int ecsGetSignature(enum componetId id);
@@ -40,6 +41,7 @@ Entity ecsCreateEntity();
 void ecsAddComponentSprite(Entity entity, Sprite sprite);
 void ecsAddComponentTransform(Entity entity, Transform transform);
 void ecsAddComponentRigidbody(Entity entity, Rigidbody rb);
+void ecsAddComponentController(Entity entity);
 
 void ecsLoadTexture(const char *filename, unsigned int *textureId);
 
@@ -49,5 +51,8 @@ void ecsRender();
 void ecsRegisterSystem(int signature, void (*systemCallback)(Entity, double));
 
 void ecsPhysics(Entity entity, double deltatime);
+
+Transform *ecsGetTransform(Entity entity);
+Rigidbody *ecsGetRigidbody(Entity entity);
 
 #endif
