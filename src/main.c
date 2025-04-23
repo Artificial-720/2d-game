@@ -22,6 +22,7 @@ enum componet_id {
 
 window_t *window;
 Render2d *renderer;
+entity_t player;
 
 
 int initialize() {
@@ -57,6 +58,16 @@ void terminate() {
 
 
 void update(double deltatime) {
+  // player input
+  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(player, RIGIDBODY);
+  if (getKey(window, KEY_A) == PRESS) {
+    rb->velocity.x = -250.0f;
+  } else if (getKey(window, KEY_D) == PRESS) {
+    rb->velocity.x = 250.0f;
+  } else {
+    rb->velocity.x = 0.0f;
+  }
+
   ecsUpdate(deltatime);
 
   // Update camera position
@@ -80,7 +91,7 @@ void gameInit() {
     ecsAddComponent(box, TRANSFORM, (void*)&transform);
   }
 
-  entity_t player = ecsCreateEntity();
+  player = ecsCreateEntity();
   Sprite sprite = {.x = 0, .y = 0, .width = 50, .height = 50, .texture = textureId};
   transform_t transform = {.position = (vec3){50, 150, 0}};
   rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .acceleration = (vec3){0, 0, 0}};
@@ -91,25 +102,7 @@ void gameInit() {
   ecsAddComponent(player, GRAVITY, (void*)&gravity);
 }
 
-
-void physicsSystem(entity_t entity, double dt) {
-  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(entity, RIGIDBODY);
-  transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
-  float *g = (float*)ecsGetComponent(entity, GRAVITY);
-
-  rb->acceleration.y -= (*g) * dt;
-
-  rb->velocity.y += rb->acceleration.y * dt;
-  rb->velocity.x += rb->acceleration.x * dt;
-
-  // transform->position.y += rb->velocity.y * dt;
-  // transform->position.x += rb->velocity.x * dt;
-  float newy = transform->position.y + rb->velocity.y * dt;
-  float newx = transform->position.x + rb->velocity.x * dt;
-
-  // check for collision
-  // if collision: move back
-  // else: keep position
+int discreteCollisionDetection(entity_t entity, transform_t *transform) {
   unsigned int count = ecsGetCount();
   for (unsigned int i = 0; i < count; i++) {
     if (i != entity) {
@@ -135,15 +128,57 @@ void physicsSystem(entity_t entity, double dt) {
         transform->position.y < tf2->position.y + 50 && transform->position.y + 50 >= tf2->position.y + 50)
       ) {
         printf("collision between %d and %d\n", entity, i);
-        newy = transform->position.y;
-        newx = transform->position.x;
+        return 1;
       }
     }
   }
 
+  return 0;
+}
+
+
+
+void physicsSystem(entity_t entity, double dt) {
+  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(entity, RIGIDBODY);
+  transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+  float *g = (float*)ecsGetComponent(entity, GRAVITY);
+
+  rb->acceleration.y -= (*g) * dt;
+
+  rb->velocity.y += rb->acceleration.y * dt;
+  rb->velocity.x += rb->acceleration.x * dt;
+
+  // transform->position.y += rb->velocity.y * dt;
+  // transform->position.x += rb->velocity.x * dt;
+  float newy = transform->position.y + rb->velocity.y * dt;
+  float newx = transform->position.x + rb->velocity.x * dt;
+
+  // check for collision
+  // if collision: move back
+  // else: keep position
+
+  if (discreteCollisionDetection(entity, transform)) {
+    // apply force in opposite direction of collision
+    // most likely gravity need to apply normal force to cancel it out
+
+    // F = m * a
+    // F = a
+    // apply force of 150 up
+
+    rb->acceleration.y += -1 * rb->acceleration.y;
+    rb->velocity.y += -1 * rb->velocity.y + 1.0;
+
+    // some how need to determine the collision normal
+  }
+
+  printf("acceleration: %f velocity: %f\n", rb->acceleration.y, rb->velocity.y);
+
+
   transform->position.y = newy;
   transform->position.x = newx;
 }
+
+
 
 void renderSystem(entity_t entity, double dt) {
   (void)dt;
