@@ -17,4 +17,6 @@ void ecsUpdate(double deltatime);
 void *ecsGetComponent(entity_t entity, int component);
 static inline unsigned int ecsGetSignature(int component) {return 0x1 << component;}
 
+int ecsGetCount();
+
 #endif

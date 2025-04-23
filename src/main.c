@@ -16,7 +16,7 @@ typedef struct {
 } transform_t;
 
 enum componet_id {
-  RIGIDBODY, TRANSFORM, SPRITE, CONTROLLER, GRAVITY
+  RIGIDBODY, TRANSFORM, SPRITE, GRAVITY, ANIMATION
 };
 
 
@@ -58,6 +58,9 @@ void terminate() {
 
 void update(double deltatime) {
   ecsUpdate(deltatime);
+
+  // Update camera position
+
 }
 
 
@@ -99,8 +102,47 @@ void physicsSystem(entity_t entity, double dt) {
   rb->velocity.y += rb->acceleration.y * dt;
   rb->velocity.x += rb->acceleration.x * dt;
 
-  transform->position.y += rb->velocity.y * dt;
-  transform->position.x += rb->velocity.x * dt;
+  // transform->position.y += rb->velocity.y * dt;
+  // transform->position.x += rb->velocity.x * dt;
+  float newy = transform->position.y + rb->velocity.y * dt;
+  float newx = transform->position.x + rb->velocity.x * dt;
+
+  // check for collision
+  // if collision: move back
+  // else: keep position
+  unsigned int count = ecsGetCount();
+  for (unsigned int i = 0; i < count; i++) {
+    if (i != entity) {
+      // TODO
+      // right now everything has a transform but should check
+      transform_t *tf2 = (transform_t*)ecsGetComponent(i, TRANSFORM);
+
+      if (
+        // top left
+        (transform->position.x < tf2->position.x && transform->position.x  + 50 >= tf2->position.x &&
+        transform->position.y < tf2->position.y && transform->position.y + 50 >= tf2->position.y)
+        // top right
+        ||
+        (transform->position.x < tf2->position.x + 50 && transform->position.x  + 50 >= tf2->position.x + 50 &&
+        transform->position.y < tf2->position.y && transform->position.y + 50 >= tf2->position.y)
+        // bottom left
+        ||
+        (transform->position.x < tf2->position.x && transform->position.x  + 50 >= tf2->position.x &&
+        transform->position.y < tf2->position.y + 50 && transform->position.y + 50 >= tf2->position.y + 50)
+        // bottom right
+        ||
+        (transform->position.x < tf2->position.x + 50 && transform->position.x  + 50 >= tf2->position.x + 50 &&
+        transform->position.y < tf2->position.y + 50 && transform->position.y + 50 >= tf2->position.y + 50)
+      ) {
+        printf("collision between %d and %d\n", entity, i);
+        newy = transform->position.y;
+        newx = transform->position.x;
+      }
+    }
+  }
+
+  transform->position.y = newy;
+  transform->position.x = newx;
 }
 
 void renderSystem(entity_t entity, double dt) {

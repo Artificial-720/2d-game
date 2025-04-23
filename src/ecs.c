@@ -119,3 +119,7 @@ void *ecsGetComponent(entity_t entity, int component) {
 
   return (void*)componentData;
 }
+
+int ecsGetCount() {
+  return entityCount;
+}
