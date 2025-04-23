@@ -1,109 +1,147 @@
-
 #include <stdio.h>
 
-#include "window.h"
+#include "window.h"   // window and input
+#include "ecs.h"      // Entity Component System
+#include "render2d.h" // OpenGL
 
-#include "ecs.h"
+typedef struct {
+  vec3 velocity;
+  vec3 acceleration;
+} rigidbody_t;
+
+typedef struct {
+  vec3 position;
+  vec3 rotation;
+  vec3 scale;
+} transform_t;
+
+enum componet_id {
+  RIGIDBODY, TRANSFORM, SPRITE, CONTROLLER, GRAVITY
+};
+
+
+window_t *window;
+Render2d *renderer;
+
+
+int initialize() {
+  int screenWidth = 1028;
+  int screenHeight = 720;
+  window = windowInit(screenWidth, screenHeight, "2d Game!");
+  if(!window) {
+    printf("Failed to create a window\n");
+    return 1;
+  }
+
+  if (ecsInit()) {
+    windowTerminate(window);
+    return 1;
+  }
+
+  renderer = r2dInit();
+  if (!renderer) {
+    return 1;
+  }
+  // TODO move this
+  renderer->projection = orthographic(0, screenWidth, 0, screenHeight, 0, 1);
+  renderer->view = translate(renderer->view, (vec3){screenWidth / 2.0f, screenHeight / 2.0f, 0.0f});
+
+  return 0;
+}
+
+void terminate() {
+  windowTerminate(window);
+  r2dTerminate(renderer);
+  ecsTerminate();
+}
+
+
+void update(double deltatime) {
+  ecsUpdate(deltatime);
+}
 
 
 void gameInit() {
   unsigned int textureId;
-  ecsLoadTexture("assets/image.png", &textureId);
+  r2dCreateTexture(renderer, "assets/image.png", &textureId);
 
   // create 10 boxes in a row for "ground"
   for (int i = 0; i < 10; i++) {
-    Entity box = ecsCreateEntity();
+    entity_t box = ecsCreateEntity();
     Sprite sprite = {.x = 0, .y = 0, .width = 50, .height = 50, .texture = textureId};
-    Transform transform = {.position = (vec3){50 * i, 50, 0}};
-    // Rigidbody rb = {.velocity = (vec3){0, 0, 0}};
+    transform_t transform = {.position = (vec3){50 * i, 50, 0}};
+    rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
 
-    ecsAddComponentSprite(box, sprite);
-    ecsAddComponentTransform(box, transform);
-    // ecsAddComponentRigidbody(box, rb);
+    ecsAddComponent(box, SPRITE, (void*)&sprite);
+    ecsAddComponent(box, RIGIDBODY, (void*)&rb);
+    ecsAddComponent(box, TRANSFORM, (void*)&transform);
   }
 
-  Entity player = ecsCreateEntity();
+  entity_t player = ecsCreateEntity();
   Sprite sprite = {.x = 0, .y = 0, .width = 50, .height = 50, .texture = textureId};
-  Transform transform = {.position = (vec3){50, 150, 0}};
-  Rigidbody rb = {.velocity = (vec3){0, 0, 0}, .acceleration = (vec3){0, 0, 0}};
-  ecsAddComponentSprite(player, sprite);
-  ecsAddComponentTransform(player, transform);
-  ecsAddComponentRigidbody(player, rb);
-  ecsAddComponentController(player);
+  transform_t transform = {.position = (vec3){50, 150, 0}};
+  rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .acceleration = (vec3){0, 0, 0}};
+  float gravity = 150;
+  ecsAddComponent(player, SPRITE, (void*)&sprite);
+  ecsAddComponent(player, RIGIDBODY, (void*)&rb);
+  ecsAddComponent(player, TRANSFORM, (void*)&transform);
+  ecsAddComponent(player, GRAVITY, (void*)&gravity);
 }
 
 
-void playerController(Entity player, double deltatime) {
-  printf("hi from controller\n");
-  (void)deltatime;
-  Transform *transform = ecsGetTransform(player);
-  Rigidbody *rb = ecsGetRigidbody(player);
+void physicsSystem(entity_t entity, double dt) {
+  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(entity, RIGIDBODY);
+  transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+  float *g = (float*)ecsGetComponent(entity, GRAVITY);
 
-  // TODO collisions
-  if (transform->position.y < 101) {
-    rb->velocity.y = 0;
-    rb->acceleration.y = 0;
-  }
+  rb->acceleration.y -= (*g) * dt;
 
-  int keyA = ecsGetKey(ECS_KEY_A);
-  int keyD = ecsGetKey(ECS_KEY_D);
-  if (keyA == PRESS) {
-    rb->velocity.x = -50.0f;
-  } else if (keyD == PRESS) {
-    rb->velocity.x = 50.0f;
-  } else {
-    rb->velocity.x = 0.0f;
-  }
+  rb->velocity.y += rb->acceleration.y * dt;
+  rb->velocity.x += rb->acceleration.x * dt;
 
-  if (ecsGetKey(ECS_KEY_SPACE) == PRESS && transform->position.y < 101) {
-    rb->velocity.y = 100.0f;
-  }
+  transform->position.y += rb->velocity.y * dt;
+  transform->position.x += rb->velocity.x * dt;
+}
 
+void renderSystem(entity_t entity, double dt) {
+  (void)dt;
+
+  transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+  Sprite *sprite = (Sprite*)ecsGetComponent(entity, SPRITE);
+  sprite->x = transform->position.x;
+  sprite->y = transform->position.y;
+  r2dDrawSprite(renderer, *sprite);
 }
 
 
-GLFWwindow *window;
 int main() {
-  int screenWidth = 1028;
-  int screenHeight = 720;
-  window = initWindow(screenWidth, screenHeight, "2d Render!");
-  if(!window) {
-    printf("Failed to create a window\n");
+  if (initialize()) {
+    terminate();
     return 0;
   }
 
-  if (ecsInit()) {
-    cleanupWindow(window);
-    return 0;
-  }
-
-  unsigned int sig = ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY);
-  ecsRegisterSystem(sig, ecsPhysics);
-  sig = ecsGetSignature(CONTROLLER);
-  ecsRegisterSystem(sig, playerController);
+  ecsRegisterComponent(SPRITE, sizeof(Sprite));
+  ecsRegisterComponent(RIGIDBODY, sizeof(rigidbody_t));
+  ecsRegisterComponent(TRANSFORM, sizeof(transform_t));
+  ecsRegisterComponent(GRAVITY, sizeof(float));
+  ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY) | ecsGetSignature(GRAVITY), physicsSystem);
+  ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(SPRITE), renderSystem);
 
   gameInit();
 
-
-  double previousTime = glfwGetTime();
-  while(!glfwWindowShouldClose(window)) {
-    double now = glfwGetTime();
+  double previousTime = getTime();
+  while(!windowShouldClose(window)) {
+    double now = getTime();
     double deltatime = now - previousTime;
     previousTime = now;
-    // printf("fps: %f\n", 1.0f / deltatime); // not perfect but works for now
 
-
-    // user input
-    glfwPollEvents();
-
-    ecsUpdate(deltatime);
-    ecsRender();
-
-    glfwSwapBuffers(window);
+    pollInput();
+    r2dClear();
+    update(deltatime);
+    windowSwapBuffers(window);
   }
 
-  ecsTerminate();
-  cleanupWindow(window);
+  terminate();
 
   return 0;
 }

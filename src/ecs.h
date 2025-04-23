@@ -1,58 +1,20 @@
 #ifndef ECS_H
 #define ECS_H
 
-#include "render2d.h"
 #include "math.h"
-#include "controls.h"
 
-typedef struct {
-  vec3 velocity;
-  vec3 acceleration;
-} Rigidbody;
-
-typedef struct {
-  vec3 position;
-  vec3 rotation;
-  vec3 scale;
-} Transform;
-
-enum componetId {
-  RIGIDBODY, TRANSFORM, SPRITE, CONTROLLER
-};
-
-unsigned int ecsGetSignature(enum componetId id);
-
-
-typedef unsigned int Entity;
-
-typedef struct {
-  int signature;
-  void (*systemCallback)(Entity, double);
-  Entity *entities;
-  int entitiesCount;
-  int entitiesMax;
-} System;
-
+typedef unsigned int entity_t;
+typedef void (*systemCallback)(entity_t, double);
 
 int ecsInit();
 void ecsTerminate();
 
-Entity ecsCreateEntity();
-void ecsAddComponentSprite(Entity entity, Sprite sprite);
-void ecsAddComponentTransform(Entity entity, Transform transform);
-void ecsAddComponentRigidbody(Entity entity, Rigidbody rb);
-void ecsAddComponentController(Entity entity);
-
-void ecsLoadTexture(const char *filename, unsigned int *textureId);
-
+entity_t ecsCreateEntity();
+void ecsAddComponent(entity_t entity, int component, void *data);
+void ecsRegisterComponent(int component, unsigned long nbytes);
+void ecsRegisterSystem(int signature, systemCallback system);
 void ecsUpdate(double deltatime);
-void ecsRender();
-
-void ecsRegisterSystem(int signature, void (*systemCallback)(Entity, double));
-
-void ecsPhysics(Entity entity, double deltatime);
-
-Transform *ecsGetTransform(Entity entity);
-Rigidbody *ecsGetRigidbody(Entity entity);
+void *ecsGetComponent(entity_t entity, int component);
+static inline unsigned int ecsGetSignature(int component) {return 0x1 << component;}
 
 #endif

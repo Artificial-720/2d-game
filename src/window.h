@@ -4,12 +4,30 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-GLFWwindow *initWindow(int width, int height, const char *title);
-void cleanupWindow(GLFWwindow *window);
+typedef GLFWwindow window_t;
+
+window_t *windowInit(int width, int height, const char *title);
+void windowTerminate(window_t *window);
+int windowShouldClose(window_t *window);
+void windowSwapBuffers(window_t *window);
 
 /*
 * return is if width or height changed from value in width or height
 */
-int updateWindowViewport(GLFWwindow *window, int *width, int *height);
+int updateWindowViewport(window_t *window, int *width, int *height);
+
+#define KEY_SPACE 32
+#define KEY_A 65
+#define KEY_D 68
+#define KEY_ESC 256
+
+enum keyState {PRESS, RELEASE, HELD};
+
+int getKey(window_t *window, int keyCode);
+
+
+void pollInput();
+double getTime();
+
 
 #endif

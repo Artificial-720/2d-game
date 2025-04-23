@@ -1,184 +1,121 @@
 #include "ecs.h"
+
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 
-Render2d *render;
+typedef struct {
+  int signature;
+  systemCallback callback;
+  // entity_t *entities;
+  // int entitiesCount;
+  // int entitiesMax;
+} system_t;
+
+typedef struct {
+  void *data;
+  int dataCount;
+  unsigned long nbytes;
+} component_t;
+
 
 int *entities;
 int entityCount;
 int maxEntities;
 
-Sprite *sprites;
-Transform *transforms;
-Rigidbody *rigidbodies;
-
-System *systems;
+system_t *systems;
 int maxSystems;
 int systemCount;
+
+component_t *components;
+int maxComponents;
+int componentCount;
 
 
 int ecsInit() {
   entityCount = 0;
   maxEntities = 100;
   entities = (int*)malloc(maxEntities * sizeof(int));
-  sprites = (Sprite*)malloc(maxEntities * sizeof(Sprite));
-  transforms = (Transform*)malloc(maxEntities * sizeof(Transform));
-  rigidbodies = (Rigidbody*)malloc(maxEntities * sizeof(Rigidbody));
-  // zero out
-  for (int i = 0; i < maxEntities; i++) {
-    entities[i] = 0;
-    sprites[i] = (Sprite){0};
-    transforms[i] = (Transform){0};
-  }
 
   maxSystems = 32;
   systemCount = 0;
-  systems = (System*)malloc(maxSystems * sizeof(System));
+  systems = (system_t*)malloc(maxSystems * sizeof(system_t));
 
-
-  render = r2dInit();
-  if (!render) {
-    return 1;
+  maxComponents = 8;
+  componentCount = 0;
+  components = (component_t*)malloc(maxComponents * sizeof(component_t));
+  for (int i = 0; i < maxComponents; i++) {
+    components[i] = (component_t){.data = 0, .nbytes = 0, .dataCount = 0};
   }
-
-
-  // TODO figure better way of handling this data for the projection
-  int screenWidth = 1028;
-  int screenHeight = 720;
-  render->projection = orthographic(0, screenWidth, 0, screenHeight, 0, 1);
-  render->view = translate(render->view, (vec3){screenWidth / 2.0f, screenHeight / 2.0f, 0.0f});
-
 
   return 0;
 }
 
 void ecsTerminate() {
-  r2dTerminate(render);
   free(entities);
-  free(sprites);
-  free(transforms);
-  free(rigidbodies);
-
-  for (int i = 0; i < systemCount; i++) {
-    System s = systems[i];
-    free(s.entities);
-  }
   free(systems);
+
+  for (int i = 0; i < componentCount; i++) {
+    free(components[i].data);
+  }
+  free(components);
 }
 
-Entity ecsCreateEntity() {
-  Entity e = entityCount;
+entity_t ecsCreateEntity() {
+  entity_t e = entityCount;
   entityCount++;
-
   entities[e] = 0;
-
   return e;
 }
 
-
-void ecsLoadTexture(const char *filename, unsigned int *textureId) {
-  r2dCreateTexture(render, filename, textureId);
-}
-
-void ecsRender() {
-  r2dClear();
-
-  for (int i = 0; i < entityCount; i++) {
-    sprites[i].x = transforms[i].position.x;
-    sprites[i].y = transforms[i].position.y;
-    r2dDrawSprite(render, sprites[i]);
-  }
-}
-
-
-void ecsUpdate(double deltatime) {
-  // the idea here is that i call the system function for each entity that has
-  // those components
-
-  // for (int i = 0; i < entityCount; i++) {
-  //   transforms[i].position.y -= 100 * deltatime;
-  // }
-
-
-  for (int i = 0; i < systemCount; i++) {
-    System system = systems[i];
-    // for (int j = 0; j < system.entitiesCount; j++) {
-    //   system.systemCallback(system.entities[j]);
-    // }
-    for (int j = 0; j < entityCount; j++) {
-      if ((entities[j] & system.signature) == system.signature) {
-        system.systemCallback(j, deltatime);
-      }
-    }
+void ecsAddComponent(entity_t entity, int component, void *data) {
+  assert(components);
+  assert(component >= 0 && component < maxComponents);
+  char *componentData = (char*)components[component].data;
+  componentData += entity * components[component].nbytes;
+  for (unsigned long i = 0; i < components[component].nbytes; i++) {
+    componentData[i] = ((char*)data)[i];
   }
 
+  // update signature
+  entities[entity] ^= ecsGetSignature(component);
 }
 
-void ecsRegisterSystem(int signature, void (*systemCallback)(Entity, double)) {
+void ecsRegisterComponent(int component, unsigned long nbytes) {
+  assert(components);
+  assert(component >= 0 && component < maxComponents);
+
+  void *data = malloc(maxEntities * nbytes);
+  component_t c = {.dataCount = 0, .data = data, .nbytes = nbytes};
+
+  components[component] = c;
+  componentCount++;
+}
+
+void ecsRegisterSystem(int signature, systemCallback system) {
   assert(systems);
-
-  System s = {
-    .signature = signature,
-    .systemCallback = systemCallback,
-    .entities = 0,
-    .entitiesCount = 0,
-    .entitiesMax = 32
-  };
-  s.entities = (Entity*)malloc(s.entitiesMax * sizeof(Entity));
-
+  system_t s = {.signature = signature, .callback = system};
   systems[systemCount] = s;
-
   systemCount++;
 }
 
-void ecsPhysics(Entity entity, double deltatime) {
-  printf("hello from ecsPhysics %d sig: %x\n", entity, entities[entity]);
-  // transforms[entity].position.y -= 100 * deltatime;
-  // Gravity
-  rigidbodies[entity].acceleration.y -= 150 * deltatime;
-
-  rigidbodies[entity].velocity.y += rigidbodies[entity].acceleration.y * deltatime;
-  rigidbodies[entity].velocity.x += rigidbodies[entity].acceleration.x * deltatime;
-
-  transforms[entity].position.y += rigidbodies[entity].velocity.y * deltatime;
-  transforms[entity].position.x += rigidbodies[entity].velocity.x * deltatime;
+void ecsUpdate(double deltatime) {
+  // TODO update this
+  for (int i = 0; i < systemCount; i++) {
+    system_t system = systems[i];
+    for (int j = 0; j < entityCount; j++) {
+      if ((entities[j] & system.signature) == system.signature) {
+        system.callback(j, deltatime);
+      }
+    }
+  }
 }
 
-unsigned int ecsGetSignature(enum componetId id) {
-  return 0x1 << id;
-}
+void *ecsGetComponent(entity_t entity, int component) {
+  assert(components);
+  assert(component >= 0 && component < maxComponents);
 
+  char *componentData = (char*)components[component].data;
+  componentData += entity * components[component].nbytes;
 
-
-
-// Component
-void ecsAddComponentRigidbody(Entity entity, Rigidbody rb) {
-  assert(rigidbodies);
-  entities[entity] ^= ecsGetSignature(RIGIDBODY);
-  rigidbodies[entity] = rb;
-}
-
-void ecsAddComponentTransform(Entity entity, Transform transform) {
-  assert(transforms);
-  entities[entity] ^= ecsGetSignature(TRANSFORM);
-  transforms[entity] = transform;
-}
-
-void ecsAddComponentSprite(Entity entity, Sprite sprite) {
-  assert(sprites);
-  entities[entity] ^= ecsGetSignature(SPRITE);
-  sprites[entity] = sprite;
-}
-
-void ecsAddComponentController(Entity entity) {
-  entities[entity] ^= ecsGetSignature(CONTROLLER);
-}
-
-Transform *ecsGetTransform(Entity entity) {
-  return &transforms[entity];
-}
-
-Rigidbody *ecsGetRigidbody(Entity entity) {
-  return &rigidbodies[entity];
+  return (void*)componentData;
 }
