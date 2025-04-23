@@ -1,201 +1,224 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include "math.h"
-#include "window.h"
-#include "render2d.h"
-#include "controls.h"
-#include "camera.h"
 
-#define WORLD_WIDTH 20
-#define WORLD_HEIGHT 10
-#define TILE_SIZE 50
+#include "window.h"   // window and input
+#include "ecs.h"      // Entity Component System
+#include "render2d.h" // OpenGL
 
 typedef struct {
-  int id;
-} Tile;
+  vec3 velocity;
+  vec3 acceleration;
+} rigidbody_t;
 
 typedef struct {
-  Sprite *sprites;
-  int spriteCount;
+  vec3 position;
+  vec3 rotation;
+  vec3 scale;
+} transform_t;
 
-  // tiles -> block ids in a array
-  // entities -> entities in a array
-
-  Tile *tiles;
-  int tileCount;
-
-  Sprite player;
+enum componet_id {
+  RIGIDBODY, TRANSFORM, SPRITE, GRAVITY, ANIMATION
+};
 
 
-} GameState;
-
-GameState gameState;
-Render2d *render;
-float zoomFactor = 1.0f;
-float velocity = 1.0f; // temp test variable REMOVE LATER
+window_t *window;
+Render2d *renderer;
+entity_t player;
 
 
-
-void initGame() {
-  gameState.sprites = 0;
-  gameState.spriteCount = 0;
-  gameState.tiles = 0;
-  gameState.tileCount = 0;
-
-  gameState.player = (Sprite) {.x = 5, .y = 500, .width = 50, .height = 50, .rotation = 0, .texture = 1};
-
-
-  // load tiles
-  // create array of tiles this is the world
-  // populate the world
-  int tileSize = WORLD_WIDTH * WORLD_HEIGHT;
-  Tile *tiles;
-  tiles = (Tile*)malloc(tileSize * sizeof(Tile));
-  for (int i = 0; i < tileSize; i++) {
-    tiles[i] = (Tile){.id = (i >= tileSize / 2)? 0: 1};
+int initialize() {
+  int screenWidth = 1028;
+  int screenHeight = 720;
+  window = windowInit(screenWidth, screenHeight, "2d Game!");
+  if(!window) {
+    printf("Failed to create a window\n");
+    return 1;
   }
-  gameState.tiles = tiles;
-  gameState.tileCount = tileSize;
 
-  unsigned int textureDirt;
-  r2dCreateTexture(render, "assets/image.png", &textureDirt);
+  if (ecsInit()) {
+    windowTerminate(window);
+    return 1;
+  }
+
+  renderer = r2dInit();
+  if (!renderer) {
+    return 1;
+  }
+  // TODO move this
+  renderer->projection = orthographic(0, screenWidth, 0, screenHeight, 0, 1);
+  renderer->view = translate(renderer->view, (vec3){screenWidth / 2.0f, screenHeight / 2.0f, 0.0f});
+
+  return 0;
 }
+
+void terminate() {
+  windowTerminate(window);
+  r2dTerminate(renderer);
+  ecsTerminate();
+}
+
 
 void update(double deltatime) {
-  (void)deltatime;
-  gameState.player.x += deltatime * 4;
+  // player input
+  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(player, RIGIDBODY);
+  if (getKey(window, KEY_A) == PRESS) {
+    rb->velocity.x = -250.0f;
+  } else if (getKey(window, KEY_D) == PRESS) {
+    rb->velocity.x = 250.0f;
+  } else {
+    rb->velocity.x = 0.0f;
+  }
 
-  
+  ecsUpdate(deltatime);
+
+  // Update camera position
+
 }
 
 
-void draw(GLFWwindow *window) {
-  r2dClear();
-  // draw background
-  // draw tiles
-  //
-  for (int i = 0; i < gameState.tileCount; i++) {
-    if (gameState.tiles[i].id) {
-      int x = (i % WORLD_WIDTH) * TILE_SIZE;
-      int y = (i / WORLD_WIDTH) * TILE_SIZE;
-      r2dDrawSprite(render, (Sprite){x, y, TILE_SIZE, TILE_SIZE, 0, 1});
+void gameInit() {
+  unsigned int textureId;
+  r2dCreateTexture(renderer, "assets/image.png", &textureId);
+
+  // create 10 boxes in a row for "ground"
+  for (int i = 0; i < 10; i++) {
+    entity_t box = ecsCreateEntity();
+    Sprite sprite = {.x = 0, .y = 0, .width = 50, .height = 50, .texture = textureId};
+    transform_t transform = {.position = (vec3){50 * i, 50, 0}};
+    rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
+
+    ecsAddComponent(box, SPRITE, (void*)&sprite);
+    ecsAddComponent(box, RIGIDBODY, (void*)&rb);
+    ecsAddComponent(box, TRANSFORM, (void*)&transform);
+  }
+
+  player = ecsCreateEntity();
+  Sprite sprite = {.x = 0, .y = 0, .width = 50, .height = 50, .texture = textureId};
+  transform_t transform = {.position = (vec3){50, 150, 0}};
+  rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .acceleration = (vec3){0, 0, 0}};
+  float gravity = 150;
+  ecsAddComponent(player, SPRITE, (void*)&sprite);
+  ecsAddComponent(player, RIGIDBODY, (void*)&rb);
+  ecsAddComponent(player, TRANSFORM, (void*)&transform);
+  ecsAddComponent(player, GRAVITY, (void*)&gravity);
+}
+
+int discreteCollisionDetection(entity_t entity, transform_t *transform) {
+  unsigned int count = ecsGetCount();
+  for (unsigned int i = 0; i < count; i++) {
+    if (i != entity) {
+      // TODO
+      // right now everything has a transform but should check
+      transform_t *tf2 = (transform_t*)ecsGetComponent(i, TRANSFORM);
+
+      if (
+        // top left
+        (transform->position.x < tf2->position.x && transform->position.x  + 50 >= tf2->position.x &&
+        transform->position.y < tf2->position.y && transform->position.y + 50 >= tf2->position.y)
+        // top right
+        ||
+        (transform->position.x < tf2->position.x + 50 && transform->position.x  + 50 >= tf2->position.x + 50 &&
+        transform->position.y < tf2->position.y && transform->position.y + 50 >= tf2->position.y)
+        // bottom left
+        ||
+        (transform->position.x < tf2->position.x && transform->position.x  + 50 >= tf2->position.x &&
+        transform->position.y < tf2->position.y + 50 && transform->position.y + 50 >= tf2->position.y + 50)
+        // bottom right
+        ||
+        (transform->position.x < tf2->position.x + 50 && transform->position.x  + 50 >= tf2->position.x + 50 &&
+        transform->position.y < tf2->position.y + 50 && transform->position.y + 50 >= tf2->position.y + 50)
+      ) {
+        printf("collision between %d and %d\n", entity, i);
+        return 1;
+      }
     }
   }
-  // draw entities
-  // draw ui
 
-  for (int i = 0; i < gameState.spriteCount; i++) {
-    r2dDrawSprite(render, gameState.sprites[i]);
-  }
-
-  r2dDrawSprite(render, gameState.player);
-
-  glfwSwapBuffers(window);
-}
-
-void userInput(GLFWwindow *window) {
-  int keyState = 0;
-
-  keyState = glfwGetKey(window, ESC_KEY);
-  if (keyState == GLFW_PRESS) {
-    glfwSetWindowShouldClose(window, GLFW_TRUE);
-  }
-
-  // keyState = glfwGetKey(window, GLFW_KEY_W);
-  int keyStateA = glfwGetKey(window, GLFW_KEY_A);
-  // keyState = glfwGetKey(window, GLFW_KEY_S);
-  int keyStateD = glfwGetKey(window, GLFW_KEY_D);
-
-  if (keyStateA == GLFW_PRESS) {
-    velocity = -1.0f;
-  } else if (keyStateD == GLFW_PRESS) {
-    velocity = 1.0f;
-  } else {
-    velocity = 0.0f;
-  }
-
-  int mouseKey = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-  if (mouseKey == GLFW_PRESS) {
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-    printf("mouse click at %f %f\n", xpos, ypos);
-
-
-    // projection * view
-    // inverse of pv
-    // times that by vec4(xpos, ypos, 0, 1.0)
-    // mat4 pv = multiply(render->projection, render->view);
-    // mat4 inversePV = inverse(pv);
-
-  }
+  return 0;
 }
 
 
-void scrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
-  (void)window;
-  (void)xoffset;
-  zoomFactor += yoffset / 10;
-  zoomFactor = clamp(zoomFactor, 0.5f, 3.0f);
-  // render->view = mat4Init(1.0f);
-  // render->view = scale(render->view, (vec3){zoomFactor, zoomFactor, 0});
-  // render->view = translate(render->view, (vec3){1028 / 2.0f, 720 / 2.0f, 0.0f});
+
+void physicsSystem(entity_t entity, double dt) {
+  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(entity, RIGIDBODY);
+  transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+  float *g = (float*)ecsGetComponent(entity, GRAVITY);
+
+  rb->acceleration.y -= (*g) * dt;
+
+  rb->velocity.y += rb->acceleration.y * dt;
+  rb->velocity.x += rb->acceleration.x * dt;
+
+  // transform->position.y += rb->velocity.y * dt;
+  // transform->position.x += rb->velocity.x * dt;
+  float newy = transform->position.y + rb->velocity.y * dt;
+  float newx = transform->position.x + rb->velocity.x * dt;
+
+  // check for collision
+  // if collision: move back
+  // else: keep position
+
+  if (discreteCollisionDetection(entity, transform)) {
+    // apply force in opposite direction of collision
+    // most likely gravity need to apply normal force to cancel it out
+
+    // F = m * a
+    // F = a
+    // apply force of 150 up
+
+    rb->acceleration.y += -1 * rb->acceleration.y;
+    rb->velocity.y += -1 * rb->velocity.y + 1.0;
+
+    // some how need to determine the collision normal
+  }
+
+  printf("acceleration: %f velocity: %f\n", rb->acceleration.y, rb->velocity.y);
+
+
+  transform->position.y = newy;
+  transform->position.x = newx;
 }
 
+
+
+void renderSystem(entity_t entity, double dt) {
+  (void)dt;
+
+  transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+  Sprite *sprite = (Sprite*)ecsGetComponent(entity, SPRITE);
+  sprite->x = transform->position.x;
+  sprite->y = transform->position.y;
+  r2dDrawSprite(renderer, *sprite);
+}
 
 
 int main() {
-  int screenWidth = 1028;
-  int screenHeight = 720;
-  GLFWwindow *window;
-  window = initWindow(screenWidth, screenHeight, "2d Render!");
-  if(!window) {
-    printf("Failed to create a window\n");
+  if (initialize()) {
+    terminate();
     return 0;
   }
-  glfwSetScrollCallback(window, scrollCallback);
 
-  render = r2dInit();
-  if (!render) {
-    cleanupWindow(window);
-    return 0;
-  }
-  render->projection = orthographic(0, screenWidth, 0, screenHeight, 0, 1);
+  ecsRegisterComponent(SPRITE, sizeof(Sprite));
+  ecsRegisterComponent(RIGIDBODY, sizeof(rigidbody_t));
+  ecsRegisterComponent(TRANSFORM, sizeof(transform_t));
+  ecsRegisterComponent(GRAVITY, sizeof(float));
+  ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY) | ecsGetSignature(GRAVITY), physicsSystem);
+  ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(SPRITE), renderSystem);
 
-  render->view = translate(render->view, (vec3){screenWidth / 2.0f, screenHeight / 2.0f, 0.0f});
+  gameInit();
 
-  initGame();
-
-  Camera camera = initCamera();
-
-  double previousTime = glfwGetTime();
-  while(!glfwWindowShouldClose(window)) {
-    double now = glfwGetTime();
+  double previousTime = getTime();
+  while(!windowShouldClose(window)) {
+    double now = getTime();
     double deltatime = now - previousTime;
     previousTime = now;
-    printf("fps: %f\n", 1.0f / deltatime); // not perfect but works for now
 
-    glfwPollEvents();
-    int viewportChanged = updateWindowViewport(window, &screenWidth, &screenHeight);
-
-    (void)viewportChanged;
-
-    userInput(window);
+    pollInput();
+    r2dClear();
     update(deltatime);
-
-    // update camera position
-    // setPosition(camera, player.position + offset);
-    // update render to match, view and projection
-    cameraSetPosition(&camera, screenWidth / 2.0f - gameState.player.x, screenHeight / 2.0f - gameState.player.y);
-    // printf("camera pos %f %f\n", camera.x, camera.y);
-    render->view = mat4Init(1.0f);
-    render->view = scale(render->view, (vec3){zoomFactor, zoomFactor, 0});
-    render->view = translate(render->view, (vec3){camera.x, camera.y, 0.0f});
-
-    draw(window);
+    windowSwapBuffers(window);
   }
 
-  r2dTerminate(render);
-  cleanupWindow(window);
+  terminate();
 
   return 0;
 }

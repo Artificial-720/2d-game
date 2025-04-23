@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
-GLFWwindow *initWindow(int width, int height, const char* title) {
+GLFWwindow *windowInit(int width, int height, const char* title) {
   GLFWwindow *window;
 
   if(!glfwInit()) {
@@ -33,9 +33,17 @@ GLFWwindow *initWindow(int width, int height, const char* title) {
   return window;
 }
 
-void cleanupWindow(GLFWwindow *window) {
+void windowTerminate(GLFWwindow *window) {
   glfwDestroyWindow(window);
   glfwTerminate();
+}
+
+int windowShouldClose(window_t *window) {
+  return glfwWindowShouldClose(window);
+}
+
+void windowSwapBuffers(window_t *window) {
+  glfwSwapBuffers(window);
 }
 
 int updateWindowViewport(GLFWwindow *window, int *width, int *height) {
@@ -48,5 +56,23 @@ int updateWindowViewport(GLFWwindow *window, int *width, int *height) {
     return 1;
   }
   return 0;
+}
+
+int getKey(window_t *window, int keyCode) {
+  int keyState = glfwGetKey(window, keyCode);
+  if (keyState == GLFW_PRESS) {
+    return PRESS;
+  } else {
+    return RELEASE;
+  }
+  return keyState;
+}
+
+void pollInput() {
+  glfwPollEvents();
+}
+
+double getTime() {
+  return glfwGetTime();
 }
 
