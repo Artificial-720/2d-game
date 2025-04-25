@@ -34,4 +34,10 @@ void printMat4(mat4 mat);
 float radians(float degrees);
 float clamp(float value, float min, float max);
 
+vec3 normalize(vec3 v);
+vec3 vec3Add(vec3 a, vec3 b);
+vec3 vec3Sub(vec3 a, vec3 b);
+vec3 vec3Scaler(vec3 v, float scaler);
+float distance(vec3 a, vec3 b);
+
 #endif

@@ -123,3 +123,26 @@ float clamp(float value, float min, float max) {
   }
   return value;
 }
+
+vec3 normalize(vec3 v) {
+  float distance = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+  return (vec3){v.x / distance, v.y / distance, v.z / distance};
+}
+
+vec3 vec3Add(vec3 a, vec3 b) {
+  return (vec3){a.x + b.x, a.y + b.y, a.z + b.z};
+}
+
+float distance(vec3 a, vec3 b) {
+  float x = b.x - a.x;
+  float y = b.y - a.y;
+  return sqrt((x * x) + (y * y));
+}
+
+vec3 vec3Sub(vec3 a, vec3 b) {
+  return (vec3){a.x - b.x, a.y - b.y, a.z - b.z};
+}
+
+vec3 vec3Scaler(vec3 v, float scaler) {
+  return (vec3){v.x * scaler, v.y * scaler, v.z * scaler};
+}
