@@ -87,11 +87,14 @@ void update(double deltatime) {
 
 void gameInit() {
   unsigned int textureId;
-  r2dCreateTexture(renderer, "assets/circle.png", &textureId);
+  r2dCreateTexture(renderer, "assets/image.png", &textureId);
 
+  // TODO move this to window
   // for alpha
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // glEnable(GL_BLEND);
+  // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // for lines
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   // create 10 boxes in a row for "ground"
   for (int i = 0; i < 10; i++) {

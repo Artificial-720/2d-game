@@ -4,6 +4,10 @@
 #include <math.h>
 
 typedef struct {
+  float x, y;
+} vec2;
+
+typedef struct {
   float x,y,z;
 } vec3;
 
