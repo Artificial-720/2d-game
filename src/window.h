@@ -19,6 +19,7 @@ int updateWindowViewport(window_t *window, int *width, int *height);
 #define KEY_SPACE 32
 #define KEY_A 65
 #define KEY_D 68
+#define KEY_F 70
 #define KEY_ESC 256
 
 enum keyState {PRESS, RELEASE, HELD};
@@ -28,6 +29,8 @@ int getKey(window_t *window, int keyCode);
 
 void pollInput();
 double getTime();
+
+void toggleFullScreen(window_t *window);
 
 
 #endif

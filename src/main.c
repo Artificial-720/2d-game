@@ -66,14 +66,27 @@ void terminate() {
 void update(double deltatime) {
   // player input
   rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(player, RIGIDBODY);
-  if (getKey(window, KEY_A) == PRESS) {
+  if (getKey(window, KEY_A) == HELD) {
     rb->velocity.x = -2.0f;
-  } else if (getKey(window, KEY_D) == PRESS) {
+  } else if (getKey(window, KEY_D) == HELD) {
     rb->velocity.x = 2.0f;
   }
-  if (getKey(window, KEY_SPACE) == PRESS) {
+  if (getKey(window, KEY_SPACE) == HELD) {
     if (rb->velocity.y < 0.01)
-    rb->force.y = 300;
+      rb->force.y = 500;
+    // rb->force.y = 500;
+    // rb->velocity.y = 50;
+  }
+
+  // game input toggle fullscreen
+  if (getKey(window, KEY_F) == PRESS) {
+    toggleFullScreen(window);
+  }
+  int width, height;
+  if (updateWindowViewport(window, &width, &height)) {
+    float h = 30;
+    float w = h * ((float)width / height);
+    renderer->projection = orthographic(0, w, 0, h, 0, 1);
   }
 
   // physics(deltatime);
@@ -167,13 +180,13 @@ void physicsSystem(entity_t e, double dt) {
     // stop velocity?
     rb->velocity = (vec3){0, 0, 0};
     // move position
-    printf("\npos: %f %f\n", tf->position.x, tf->position.y);
+    // printf("\npos: %f %f\n", tf->position.x, tf->position.y);
     collision.a.x = 0;
     collision.a.y = 0.5 - collision.a.y;
-    printf("hasCollision %f %f\n", collision.a.x, collision.a.y);
+    // printf("hasCollision %f %f\n", collision.a.x, collision.a.y);
     // tf->position = vec3Add(tf->position, collision.a);
     tf->position = vec3Add(tf->position, collision.a);
-    printf("pos: %f %f\n\n", tf->position.x, tf->position.y);
+    // printf("pos: %f %f\n\n", tf->position.x, tf->position.y);
 
 
   }

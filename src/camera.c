@@ -1,8 +1,6 @@
 #include "camera.h"
 #include "math.h"
 
-#include <stdio.h>
-
 camera_t cameraInit() {
   camera_t camera = {
     .view = mat4Init(1.0f),
@@ -18,8 +16,6 @@ void cameraUpdatePosition(camera_t *camera, float x, float y) {
 
   float newX = camera->offset.x - x;
   float newY = camera->offset.y - y;
-
-  printf("camera pos: %f %f\n", newX, newY);
 
   camera->view = mat4Init(1.0f);
   camera->view = translate(camera->view, (vec3){newX, newY, 0});
