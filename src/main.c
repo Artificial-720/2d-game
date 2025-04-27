@@ -61,23 +61,6 @@ void terminate() {
   ecsTerminate();
 }
 
-void physics(double deltatime) {
-  printf("running physics\n");
-  unsigned int count = ecsGetCount();
-  for (unsigned int i = 0; i < count; i++) {
-    collider_t *a = (collider_t*)ecsGetComponent(i, COLLIDER);
-    if (!a) continue;
-    for (unsigned int j = 0; j < count; j++) {
-      collider_t *b = (collider_t*)ecsGetComponent(j, COLLIDER);
-      if (!b) continue;
-      // both should have a collider
-      printf("found 2 with collider %d %d\n", i, j);
-      (void)deltatime;
-    }
-  }
-}
-
-
 
 
 void update(double deltatime) {
@@ -87,6 +70,10 @@ void update(double deltatime) {
     rb->velocity.x = -2.0f;
   } else if (getKey(window, KEY_D) == PRESS) {
     rb->velocity.x = 2.0f;
+  }
+  if (getKey(window, KEY_SPACE) == PRESS) {
+    if (rb->velocity.y < 0.01)
+    rb->force.y = 300;
   }
 
   // physics(deltatime);
@@ -145,7 +132,7 @@ void physicsSystem(entity_t e, double dt) {
   float *g = (float*)ecsGetComponent(e, GRAVITY);
 
   // apply forces to object in this case just gravity
-  rb->force.y = rb->mass * -(*g);
+  rb->force.y += rb->mass * -(*g);
 
   // i think collision detection goes here
   // then resolve collisions here pass dt
