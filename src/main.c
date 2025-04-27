@@ -40,15 +40,8 @@ int initialize() {
 
   float h = 30;
   float w = h * ((float)screenWidth / screenHeight);
-
-  // TODO move this
-  // renderer->projection = orthographic(0, screenWidth, 0, screenHeight, 0, 1);
   renderer->projection = orthographic(0, w, 0, h, 0, 1);
-  // renderer->view = translate(renderer->view, (vec3){screenWidth / 2.0f, screenHeight / 2.0f, 0.0f});
-
   camera = cameraInit();
-  // camera.offset.x = screenWidth / 2.0f; // todo include half of player size
-  // camera.offset.y = screenHeight / 2.0f;
   camera.offset.x = w / 2.0;
   camera.offset.y = h / 2.0;
 
@@ -87,6 +80,8 @@ void update(double deltatime) {
     float h = 30;
     float w = h * ((float)width / height);
     renderer->projection = orthographic(0, w, 0, h, 0, 1);
+    camera.offset.x = w / 2.0;
+    camera.offset.y = h / 2.0;
   }
 
   // physics(deltatime);
