@@ -37,13 +37,20 @@ int initialize() {
   if (!renderer) {
     return 1;
   }
+
+  float h = 30;
+  float w = h * ((float)screenWidth / screenHeight);
+
   // TODO move this
-  renderer->projection = orthographic(0, screenWidth, 0, screenHeight, 0, 1);
+  // renderer->projection = orthographic(0, screenWidth, 0, screenHeight, 0, 1);
+  renderer->projection = orthographic(0, w, 0, h, 0, 1);
   // renderer->view = translate(renderer->view, (vec3){screenWidth / 2.0f, screenHeight / 2.0f, 0.0f});
 
   camera = cameraInit();
-  camera.offset.x = screenWidth / 2.0f; // todo include half of player size
-  camera.offset.y = screenHeight / 2.0f;
+  // camera.offset.x = screenWidth / 2.0f; // todo include half of player size
+  // camera.offset.y = screenHeight / 2.0f;
+  camera.offset.x = w / 2.0;
+  camera.offset.y = h / 2.0;
 
   return 0;
 }
@@ -77,9 +84,9 @@ void update(double deltatime) {
   // player input
   rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(player, RIGIDBODY);
   if (getKey(window, KEY_A) == PRESS) {
-    rb->force.x = -250.0f;
+    rb->velocity.x = -2.0f;
   } else if (getKey(window, KEY_D) == PRESS) {
-    rb->force.x = 250.0f;
+    rb->velocity.x = 2.0f;
   }
 
   // physics(deltatime);
@@ -106,10 +113,10 @@ void gameInit() {
   // create 10 boxes in a row for "ground"
   for (int i = 0; i < 10; i++) {
     entity_t box = ecsCreateEntity();
-    Sprite sprite = {.x = 0, .y = 0, .width = 50, .height = 50, .texture = textureId};
-    transform_t transform = {.position = (vec3){50 * i, 50, 0}};
+    Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
+    transform_t transform = {.position = (vec3){1 * i, 1, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
     rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
-    collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 25};
+    collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
 
     ecsAddComponent(box, SPRITE, (void*)&sprite);
     ecsAddComponent(box, RIGIDBODY, (void*)&rb);
@@ -118,10 +125,10 @@ void gameInit() {
   }
 
   player = ecsCreateEntity();
-  Sprite sprite = {.x = 0, .y = 0, .width = 50, .height = 50, .texture = textureId};
-  transform_t transform = {.position = (vec3){50, 150, 0}};
+  Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
+  transform_t transform = {.position = (vec3){1, 2.0f, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
   rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .force = (vec3){0, 0, 0}, .mass = 1.0f};
-  collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 25};
+  collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
   float gravity = 9.81f;
   ecsAddComponent(player, SPRITE, (void*)&sprite);
   ecsAddComponent(player, RIGIDBODY, (void*)&rb);
@@ -175,7 +182,7 @@ void physicsSystem(entity_t e, double dt) {
     // move position
     printf("\npos: %f %f\n", tf->position.x, tf->position.y);
     collision.a.x = 0;
-    collision.a.y = 25 - collision.a.y;
+    collision.a.y = 0.5 - collision.a.y;
     printf("hasCollision %f %f\n", collision.a.x, collision.a.y);
     // tf->position = vec3Add(tf->position, collision.a);
     tf->position = vec3Add(tf->position, collision.a);

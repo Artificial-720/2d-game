@@ -52,15 +52,15 @@ collision_t collisionDetection(collider_t *ac, transform_t *at, collider_t *bc, 
   // };
   vec2 pointsB[4] = {
     {bt->position.x, bt->position.y},           // top left
-    {bt->position.x + 50, bt->position.y},      // top right
-    {bt->position.x, at->position.y + 50},      // bottom left
-    {bt->position.x + 50, bt->position.y + 50}  // bottom right
+    {bt->position.x + bt->scale.x, bt->position.y},      // top right
+    {bt->position.x, bt->position.y + bt->scale.y},      // bottom left
+    {bt->position.x + bt->scale.x, bt->position.y + bt->scale.y}  // bottom right
   };
 
   // for each point check if inside the other
   for (int i = 0; i < 4; i++) {
-    if ((at->position.x <= pointsB[i].x && pointsB[i].x < at->position.x + 50) && 
-        (at->position.y <= pointsB[i].y && pointsB[i].y < at->position.y + 50)
+    if ((at->position.x <= pointsB[i].x && pointsB[i].x < at->position.x + at->scale.x) && 
+        (at->position.y <= pointsB[i].y && pointsB[i].y < at->position.y + at->scale.y)
     ) {
       result.hasCollision = 1;
 
