@@ -5,6 +5,7 @@
 #include "ecs.h"      // Entity Component System
 #include "render2d.h" // OpenGL
 #include "physics.h"  // handles 2d physics and collisions resolution
+#include "camera.h"   // handles camera position and movement
 
 
 enum componet_id {
@@ -14,6 +15,7 @@ enum componet_id {
 
 window_t *window;
 Render2d *renderer;
+camera_t camera;
 entity_t player;
 
 
@@ -37,7 +39,11 @@ int initialize() {
   }
   // TODO move this
   renderer->projection = orthographic(0, screenWidth, 0, screenHeight, 0, 1);
-  renderer->view = translate(renderer->view, (vec3){screenWidth / 2.0f, screenHeight / 2.0f, 0.0f});
+  // renderer->view = translate(renderer->view, (vec3){screenWidth / 2.0f, screenHeight / 2.0f, 0.0f});
+
+  camera = cameraInit();
+  camera.offset.x = screenWidth / 2.0f; // todo include half of player size
+  camera.offset.y = screenHeight / 2.0f;
 
   return 0;
 }
@@ -81,7 +87,8 @@ void update(double deltatime) {
   ecsUpdate(deltatime);
 
   // Update camera position
-
+  transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
+  cameraUpdatePosition(&camera, tf->position.x, tf->position.y);
 }
 
 
@@ -115,7 +122,7 @@ void gameInit() {
   transform_t transform = {.position = (vec3){50, 150, 0}};
   rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .force = (vec3){0, 0, 0}, .mass = 1.0f};
   collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 25};
-  float gravity = -150;
+  float gravity = 9.81f;
   ecsAddComponent(player, SPRITE, (void*)&sprite);
   ecsAddComponent(player, RIGIDBODY, (void*)&rb);
   ecsAddComponent(player, TRANSFORM, (void*)&transform);
@@ -131,7 +138,7 @@ void physicsSystem(entity_t e, double dt) {
   float *g = (float*)ecsGetComponent(e, GRAVITY);
 
   // apply forces to object in this case just gravity
-  rb->force.y = rb->mass * *g;
+  rb->force.y = rb->mass * -(*g);
 
   // i think collision detection goes here
   // then resolve collisions here pass dt
@@ -191,6 +198,8 @@ void physicsSystem(entity_t e, double dt) {
 
 void renderSystem(entity_t entity, double dt) {
   (void)dt;
+
+  renderer->view = camera.view;
 
   transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
   Sprite *sprite = (Sprite*)ecsGetComponent(entity, SPRITE);

@@ -4,13 +4,16 @@
 #include "math.h"
 
 typedef struct {
-  float x, y;
+  vec2 pos;
   mat4 view;
-} Camera;
+  float zoomFactor;
+  vec2 offset;
+} camera_t;
 
 
-Camera initCamera();
+camera_t cameraInit();
 
-void cameraSetPosition(Camera *camera, float x, float y);
+void cameraUpdatePosition(camera_t *camera, float x, float y);
+
 
 #endif
