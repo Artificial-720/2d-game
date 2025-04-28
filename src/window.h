@@ -32,5 +32,6 @@ double getTime();
 
 void toggleFullScreen(window_t *window);
 
+void windowSetScrollCallback(window_t *window, void (*callback)(window_t *, double, double));
 
 #endif

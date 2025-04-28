@@ -77,11 +77,11 @@ void update(double deltatime) {
   }
   int width, height;
   if (updateWindowViewport(window, &width, &height)) {
-    float h = 30;
+    float h = 30.0f;
     float w = h * ((float)width / height);
-    renderer->projection = orthographic(0, w, 0, h, 0, 1);
-    camera.offset.x = w / 2.0;
-    camera.offset.y = h / 2.0;
+    renderer->projection = orthographic(0, w / camera.zoomFactor, 0, h / camera.zoomFactor, 0, 1);
+    camera.offset.x = (w / camera.zoomFactor) / 2.0;
+    camera.offset.y = (h / camera.zoomFactor) / 2.0;
   }
 
   // physics(deltatime);
@@ -210,12 +210,20 @@ void renderSystem(entity_t entity, double dt) {
   r2dDrawSprite(renderer, *sprite);
 }
 
+void scrollCallback(window_t *window, double xoffset, double yoffset) {
+  (void)window;
+  (void)xoffset;
+  float newZoom = camera.zoomFactor + yoffset / 10;
+  camera.zoomFactor = clamp(newZoom, 1.0f, 3.0f);
+}
 
 int main() {
   if (initialize()) {
     terminate();
     return 0;
   }
+
+  windowSetScrollCallback(window, scrollCallback);
 
   ecsRegisterComponent(SPRITE, sizeof(Sprite));
   ecsRegisterComponent(RIGIDBODY, sizeof(rigidbody_t));

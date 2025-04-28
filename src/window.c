@@ -105,3 +105,7 @@ void toggleFullScreen(window_t *window) {
     }
   }
 }
+
+void windowSetScrollCallback(window_t *window, void (*callback)()) {
+  glfwSetScrollCallback(window, callback);
+}
