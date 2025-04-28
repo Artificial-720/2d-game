@@ -84,6 +84,30 @@ void update(double deltatime) {
     camera.offset.y = (h / camera.zoomFactor) / 2.0;
   }
 
+  // click input
+  if (getMouseButton(window, MOUSE_BUTTON_LEFT) == PRESS) {
+    double xpos, ypos;
+    getCursorPos(window, &xpos, &ypos);
+    printf("----------------\n");
+    printf("Screen click %f %f\n", xpos, ypos);
+
+    mat4 vpInverse = multiply(renderer->projection, renderer->view);
+    vpInverse = inverse(vpInverse);
+    printf("view projection inverse\n");
+    printMat4(vpInverse);
+
+    double x = 2.0f * xpos / width - 1;
+    double y = 2.0f * ypos / height - 1;
+    vec4 screenPos = {x, -y, 0.0f, 1.0f};
+    printf("screenPos %f %f\n", x, -y);
+
+    vec4 result = mat4vec4multiply(vpInverse, screenPos);
+
+    // world click seems to be off by 1 in x and 2 in y
+    printf("World click %f %f\n", result.x, result.y);
+    printf("----------------\n");
+  }
+
   // physics(deltatime);
 
   ecsUpdate(deltatime);
@@ -91,6 +115,7 @@ void update(double deltatime) {
   // Update camera position
   transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
   cameraUpdatePosition(&camera, tf->position.x, tf->position.y);
+  printf("player pos: %f %f\n", tf->position.x, tf->position.y);
 }
 
 

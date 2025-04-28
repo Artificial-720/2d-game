@@ -109,3 +109,14 @@ void toggleFullScreen(window_t *window) {
 void windowSetScrollCallback(window_t *window, void (*callback)()) {
   glfwSetScrollCallback(window, callback);
 }
+
+int getMouseButton(window_t *window, int button) {
+  if (glfwGetMouseButton(window, button) == GLFW_PRESS) {
+    return PRESS;
+  }
+  return RELEASE;
+}
+
+void getCursorPos(window_t *window, double *xpos, double *ypos) {
+  glfwGetCursorPos(window, xpos, ypos);
+}
