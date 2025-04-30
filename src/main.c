@@ -7,52 +7,17 @@
 #include "physics.h"  // handles 2d physics and collisions resolution
 #include "camera.h"   // handles camera position and movement
 
+#include "chunk.h"    // world tiles
 
-enum componet_id {
-  RIGIDBODY, TRANSFORM, SPRITE, GRAVITY, ANIMATION, COLLIDER
-};
+#include "components.h"
 
-typedef struct {
-  int id;
-} tile_t;
-typedef struct {
-  tile_t tiles[100];
-  int width;
-  int height;
-  float x, y;
-} chunk_t;
-
-chunk_t chunk;
-void placeTile(vec4 worldPos) {
-  // if clicked in world
-  if (worldPos.x < chunk.width && worldPos.x >= 0 &&
-    worldPos.y < chunk.height && worldPos.y >= 0) {
-    int x = (int)worldPos.x;
-    int y = (int)((worldPos.y - 0.1f)); // minus 0.1 to make 12.0 go into 12
-
-    int index = y * chunk.width + x;
-    // if nothing in location place a new tile
-    if (chunk.tiles[index].id == 0) {
-      entity_t box = ecsCreateEntity();
-      Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = 1}; // fix this texture id stuff
-      // make sure to add 1 to the y for the world position
-      transform_t transform = {.position = (vec3){x, y + 1, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
-      rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
-      collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
-      ecsAddComponent(box, SPRITE, (void*)&sprite);
-      ecsAddComponent(box, RIGIDBODY, (void*)&rb);
-      ecsAddComponent(box, TRANSFORM, (void*)&transform);
-      ecsAddComponent(box, COLLIDER, (void*)&collider);
-      chunk.tiles[index] = (tile_t){.id = box};
-    }
-  }
-}
 
 window_t *window;
 Render2d *renderer;
 camera_t camera;
 entity_t player;
 
+chunk_t chunk;
 
 int initialize() {
   int screenWidth = 1028;
@@ -126,24 +91,13 @@ void update(double deltatime) {
     double xpos, ypos;
     getCursorPos(window, &xpos, &ypos);
     vec4 worldPos = screenToWorld(&camera, xpos, ypos);
-    placeTile(worldPos);
+    placeTile(&chunk, worldPos.x, worldPos.y);
   }
   if (getMouseButton(window, MOUSE_BUTTON_RIGHT) == PRESS) {
     double xpos, ypos;
     getCursorPos(window, &xpos, &ypos);
     vec4 worldPos = screenToWorld(&camera, xpos, ypos);
-    // if clicked in world
-    if (worldPos.x < chunk.width && worldPos.x > 0 &&
-      worldPos.y < chunk.height && worldPos.y > 0) {
-      int x = (int)worldPos.x;
-      int y = (int)((worldPos.y - 0.1f)); // minus 0.1 to make 12.0 go into 12
-
-      int index = y * chunk.width + x;
-      if (chunk.tiles[index].id != 0) {
-        ecsDeleteEntity(chunk.tiles[index].id);
-        chunk.tiles[index].id = 0;
-      }
-    }
+    removeTile(&chunk, worldPos.x, worldPos.y);
   }
 
   // physics(deltatime);
@@ -168,23 +122,9 @@ void gameInit() {
   // for lines
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-  // create 10 boxes in a row for "ground"
-  // for (int i = 0; i < 10; i++) {
-  //   entity_t box = ecsCreateEntity();
-  //   Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
-  //   transform_t transform = {.position = (vec3){1 * i, 1, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
-  //   rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
-  //   collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
-
-  //   ecsAddComponent(box, SPRITE, (void*)&sprite);
-  //   ecsAddComponent(box, RIGIDBODY, (void*)&rb);
-  //   ecsAddComponent(box, TRANSFORM, (void*)&transform);
-  //   ecsAddComponent(box, COLLIDER, (void*)&collider);
-  // }
-
   player = ecsCreateEntity();
   Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
-  transform_t transform = {.position = (vec3){1, 12.0f, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
+  transform_t transform = {.position = (vec3){10.0f, 23.0f, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
   rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .force = (vec3){0, 0, 0}, .mass = 1.0f};
   collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
   float gravity = 9.81f;
@@ -196,17 +136,12 @@ void gameInit() {
 
 
   // setup test chunk
-  chunk = (chunk_t) {
-    .y = 0,
-    .x = 0,
-    .width = 10,
-    .height = 10
-  };
-  for (int i = 0; i < 100; i++){
-    chunk.tiles[i] = (tile_t){.id = 0};
+  chunk = (chunk_t) {.y = 0, .x = 0};
+  for (int i = 0; i < CHUNK_WIDTH * CHUNK_HEIGHT; i++) chunk.tiles[i] = (tile_t){.id = 0};
+
+  for (int i = 0; i < CHUNK_WIDTH; i++) {
+    placeTile(&chunk, i, 20);
   }
-  vec4 p = {0, 0, 0, 0};
-  placeTile(p);
 
 }
 

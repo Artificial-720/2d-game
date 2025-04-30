@@ -1,0 +1,9 @@
+#ifndef COMPONENTS_H
+#define COMPONENTS_H
+
+enum componet_id {
+  RIGIDBODY, TRANSFORM, SPRITE, GRAVITY, ANIMATION, COLLIDER
+};
+
+
+#endif
