@@ -10,11 +10,13 @@ int ecsInit();
 void ecsTerminate();
 
 entity_t ecsCreateEntity();
+void ecsDeleteEntity(entity_t entity);
 void ecsAddComponent(entity_t entity, int component, void *data);
 void ecsRegisterComponent(int component, unsigned long nbytes);
 void ecsRegisterSystem(int signature, systemCallback system);
 void ecsUpdate(double deltatime);
 void *ecsGetComponent(entity_t entity, int component);
+int ecsEntityExists(entity_t entity);
 static inline unsigned int ecsGetSignature(int component) {return 0x1 << component;}
 
 int ecsGetCount();

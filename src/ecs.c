@@ -67,6 +67,15 @@ entity_t ecsCreateEntity() {
   return e;
 }
 
+void ecsDeleteEntity(entity_t entity) {
+  entities[entity] = 0;
+  // TODO this is bad we will run out of spots
+}
+
+int ecsEntityExists(entity_t entity) {
+  return entities[entity] != 0;
+}
+
 void ecsAddComponent(entity_t entity, int component, void *data) {
   assert(components);
   assert(component >= 0 && component < maxComponents);
