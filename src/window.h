@@ -19,15 +19,24 @@ int updateWindowViewport(window_t *window, int *width, int *height);
 #define KEY_SPACE 32
 #define KEY_A 65
 #define KEY_D 68
+#define KEY_F 70
 #define KEY_ESC 256
+
+#define MOUSE_BUTTON_LEFT 0
+#define MOUSE_BUTTON_RIGHT 1
 
 enum keyState {PRESS, RELEASE, HELD};
 
 int getKey(window_t *window, int keyCode);
+int getMouseButton(window_t *window, int button);
+void getCursorPos(window_t *window, double *xpos, double *ypos);
 
 
 void pollInput();
 double getTime();
 
+void toggleFullScreen(window_t *window);
+
+void windowSetScrollCallback(window_t *window, void (*callback)(window_t *, double, double));
 
 #endif
