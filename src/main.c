@@ -42,8 +42,6 @@ int initialize() {
   float w = h * ((float)screenWidth / screenHeight);
   renderer->projection = orthographic(0, w, 0, h, 0, 1);
   camera = cameraInit();
-  camera.offset.x = w / 2.0;
-  camera.offset.y = h / 2.0;
 
   return 0;
 }
@@ -79,33 +77,43 @@ void update(double deltatime) {
   if (updateWindowViewport(window, &width, &height)) {
     float h = 30.0f;
     float w = h * ((float)width / height);
-    renderer->projection = orthographic(0, w / camera.zoomFactor, 0, h / camera.zoomFactor, 0, 1);
-    camera.offset.x = (w / camera.zoomFactor) / 2.0;
-    camera.offset.y = (h / camera.zoomFactor) / 2.0;
+    renderer->projection = orthographic(
+      -w / (2 * camera.zoomFactor), w / (2 * camera.zoomFactor),
+      -h / (2 * camera.zoomFactor), h / (2 * camera.zoomFactor),
+      -1, 1
+    );
   }
 
   // click input
   if (getMouseButton(window, MOUSE_BUTTON_LEFT) == PRESS) {
     double xpos, ypos;
     getCursorPos(window, &xpos, &ypos);
-    printf("----------------\n");
-    printf("Screen click %f %f\n", xpos, ypos);
 
     mat4 vpInverse = multiply(renderer->projection, renderer->view);
     vpInverse = inverse(vpInverse);
-    printf("view projection inverse\n");
-    printMat4(vpInverse);
 
-    double x = 2.0f * xpos / width - 1;
-    double y = 2.0f * ypos / height - 1;
+    double x = 2 * (xpos / width) - 1;
+    double y = 1 - 2 * (ypos / height);
     vec4 screenPos = {x, -y, 0.0f, 1.0f};
-    printf("screenPos %f %f\n", x, -y);
 
     vec4 result = mat4vec4multiply(vpInverse, screenPos);
 
-    // world click seems to be off by 1 in x and 2 in y
-    printf("World click %f %f\n", result.x, result.y);
-    printf("----------------\n");
+    result.x += camera.pos.x;
+    result.y += camera.pos.y;
+
+
+    // printf("\n\nscreen calculations\n");
+    // printf("Screen click %f %f\n", xpos, ypos);
+    // printf("screenPos %f %f\n", x, -y);
+    // printf("view:\n");
+    // printMat4(renderer->view);
+    // printf("projection:\n");
+    // printMat4(renderer->projection);
+    // printf("view projection inverse\n");
+    // printMat4(vpInverse);
+    // printf("World click %f %f\n", result.x, result.y);
+
+
   }
 
   // physics(deltatime);
@@ -115,7 +123,7 @@ void update(double deltatime) {
   // Update camera position
   transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
   cameraUpdatePosition(&camera, tf->position.x, tf->position.y);
-  printf("player pos: %f %f\n", tf->position.x, tf->position.y);
+  // printf("player pos: %f %f\n", tf->position.x, tf->position.y);
 }
 
 
@@ -131,18 +139,18 @@ void gameInit() {
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   // create 10 boxes in a row for "ground"
-  for (int i = 0; i < 10; i++) {
-    entity_t box = ecsCreateEntity();
-    Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
-    transform_t transform = {.position = (vec3){1 * i, 1, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
-    rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
-    collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
+  // for (int i = 0; i < 10; i++) {
+  //   entity_t box = ecsCreateEntity();
+  //   Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
+  //   transform_t transform = {.position = (vec3){1 * i, 1, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
+  //   rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
+  //   collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
 
-    ecsAddComponent(box, SPRITE, (void*)&sprite);
-    ecsAddComponent(box, RIGIDBODY, (void*)&rb);
-    ecsAddComponent(box, TRANSFORM, (void*)&transform);
-    ecsAddComponent(box, COLLIDER, (void*)&collider);
-  }
+  //   ecsAddComponent(box, SPRITE, (void*)&sprite);
+  //   ecsAddComponent(box, RIGIDBODY, (void*)&rb);
+  //   ecsAddComponent(box, TRANSFORM, (void*)&transform);
+  //   ecsAddComponent(box, COLLIDER, (void*)&collider);
+  // }
 
   player = ecsCreateEntity();
   Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
@@ -255,7 +263,7 @@ int main() {
   ecsRegisterComponent(TRANSFORM, sizeof(transform_t));
   ecsRegisterComponent(COLLIDER, sizeof(collider_t));
   ecsRegisterComponent(GRAVITY, sizeof(float));
-  ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY) | ecsGetSignature(GRAVITY), physicsSystem);
+  // ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY) | ecsGetSignature(GRAVITY), physicsSystem);
   ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(SPRITE), renderSystem);
 
   gameInit();

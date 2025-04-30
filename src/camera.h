@@ -7,7 +7,6 @@ typedef struct {
   vec2 pos;
   mat4 view;
   float zoomFactor;
-  vec2 offset;
 } camera_t;
 
 

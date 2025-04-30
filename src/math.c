@@ -266,5 +266,11 @@ vec4 mat4vec4multiply(mat4 a, vec4 v) {
   result.z = m[8] * v.x + m[9] * v.y + m[10] * v.z + m[11] * v.w;
   result.w = m[12] * v.x + m[13] * v.y + m[14] * v.z + m[15] * v.w;
 
+  // result.x = m[0] * v.x + m[4] * v.y + m[8]  * v.z + m[12] * v.w;
+  // result.y = m[1] * v.x + m[5] * v.y + m[9]  * v.z + m[13] * v.w;
+  // result.z = m[2] * v.x + m[6] * v.y + m[10] * v.z + m[14] * v.w;
+  // result.w = m[3] * v.x + m[7] * v.y + m[11] * v.z + m[15] * v.w;
+
+
   return result;
 }
