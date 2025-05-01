@@ -39,4 +39,13 @@ void toggleFullScreen(window_t *window);
 
 void windowSetScrollCallback(window_t *window, void (*callback)(window_t *, double, double));
 
+
+
+  // TODO move this to window
+  // for alpha
+  // glEnable(GL_BLEND);
+  // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // for lines
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 #endif

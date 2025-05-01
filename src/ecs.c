@@ -80,10 +80,12 @@ void ecsAddComponent(entity_t entity, int component, void *data) {
   assert(components);
   assert(component >= 0 && component < maxComponents);
   assert(components[component].data);
-  char *componentData = (char*)components[component].data;
-  componentData += entity * components[component].nbytes;
-  for (unsigned long i = 0; i < components[component].nbytes; i++) {
-    componentData[i] = ((char*)data)[i];
+  if (data) {
+    char *componentData = (char*)components[component].data;
+    componentData += entity * components[component].nbytes;
+    for (unsigned long i = 0; i < components[component].nbytes; i++) {
+      componentData[i] = ((char*)data)[i];
+    }
   }
 
   // update signature
