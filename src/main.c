@@ -8,7 +8,7 @@
 #include "camera.h"   // handles camera position and movement
 
 #include "components.h" // ECS - the components
-#include "systems.h"    // ECS - the systems definitions
+// #include "systems.h"    // ECS - the systems definitions
 #include "world.h"      // Holds world tile information
 
 #define PLAYER_START_X 10
@@ -109,7 +109,8 @@ void update(double deltatime) {
 
   // physics(deltatime);
 
-  ecsUpdate(deltatime);
+  // ecsUpdate(deltatime);
+  (void)deltatime;
 
   // Update camera position
   transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
@@ -175,8 +176,8 @@ int main() {
   ecsRegisterComponent(TRANSFORM, sizeof(transform_t));
   ecsRegisterComponent(COLLIDER, sizeof(collider_t));
   ecsRegisterComponent(GRAVITY, sizeof(float));
-  ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY) | ecsGetSignature(GRAVITY), physicsSystem);
-  ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(SPRITE), renderSystem);
+  // ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY) | ecsGetSignature(GRAVITY), physicsSystem);
+  // ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(SPRITE), renderSystem);
 
   gameInit();
 

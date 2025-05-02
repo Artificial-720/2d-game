@@ -40,10 +40,11 @@ void physicsSystem(entity_t e, double dt) {
   // then resolve collisions here pass dt
   collision_t collision;
   if (c) {
-    unsigned int count = ecsGetCount();
+    // unsigned int count = ecsGetCount();
+    unsigned int count = 10;
     for (unsigned int i = 0; i < count; i++) {
       if (i == e) continue;
-      if (!ecsEntityExists(i)) continue;
+      // if (!ecsEntityExists(i)) continue;
       collider_t *bc = (collider_t*)ecsGetComponent(i, COLLIDER);
       transform_t *bt = (transform_t*)ecsGetComponent(i, TRANSFORM);
       if (!bc) continue;
