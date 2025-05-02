@@ -1,7 +1,10 @@
 #include "ecs.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
+
+#define ENTITY_NULL 9999999
 
 typedef struct {
   int signature;
@@ -18,7 +21,8 @@ typedef struct {
 } component_t;
 
 
-int *entities;
+int *entitiesValues;
+int *entitiesKeys;
 int entityCount;
 int maxEntities;
 
@@ -34,7 +38,12 @@ int componentCount;
 int ecsInit() {
   entityCount = 0;
   maxEntities = 1000;
-  entities = (int*)malloc(maxEntities * sizeof(int));
+  entitiesKeys = (int*)malloc(maxEntities * sizeof(int));
+  entitiesValues = (int*)malloc(maxEntities * sizeof(int));
+  for (int i = 0; i < maxEntities; i++) {
+    entitiesKeys[i] = ENTITY_NULL;
+    entitiesValues[i] = 0;
+  }
 
   maxSystems = 32;
   systemCount = 0;
@@ -51,7 +60,8 @@ int ecsInit() {
 }
 
 void ecsTerminate() {
-  free(entities);
+  free(entitiesKeys);
+  free(entitiesValues);
   free(systems);
 
   for (int i = 0; i < componentCount; i++) {
@@ -61,23 +71,71 @@ void ecsTerminate() {
 }
 
 entity_t ecsCreateEntity() {
-  entity_t e = entityCount;
-  entityCount++;
-  entities[e] = 0;
-  assert(entityCount < maxEntities);
-  return e;
+  // find next free key
+  printf("create entity\n");
+  for (int i = 0; i < maxEntities; i++) {
+    if (entitiesKeys[i] == ENTITY_NULL) {
+      printf("found key %d\n", i);
+      entitiesKeys[i] = entityCount;
+      entityCount++;
+
+      return i;
+    }
+  }
+  return 0;
 }
 
-void ecsDeleteEntity(entity_t entity) {
-  entities[entity] = 0;
-  // TODO this is bad we will run out of spots
+void ecsDeleteEntity(entity_t entityKey) {
+  entity_t actual = entitiesKeys[entityKey];
+  printf("deleting entity key %d which points to actual %d\n", entityKey, actual);
+  entityCount--;
+
+  // for each component, copy data from entityCount to actual
+
+  entitiesValues[actual] = entitiesValues[entityCount]; // signature
+  entitiesValues[entityCount] = 0;
+  for (int i = 0; i < componentCount; i++) {
+    unsigned long nbytes = components[i].nbytes;
+    char *data1 = (char*)ecsGetComponent(actual, i);
+    char *data2 = (char*)ecsGetComponent(entityCount, i);
+
+    for (unsigned long byte = 0; byte < nbytes; byte++) {
+      data1[byte] = data2[byte];
+      data2[byte] = 0; // zero out the old stuff
+    }
+  }
+  // entitiesKeys[entityCount] = entityKey;
+  for (int i = 0; i < maxEntities; i++) {
+    if (entitiesKeys[i] == entityCount) {
+      entitiesKeys[i] = actual;
+      break;
+    }
+  }
+
+  entitiesKeys[entityKey] = ENTITY_NULL;
+
+
+  printf("after delete entitiesKey[%d] = %d\n", entityKey, entitiesKeys[entityKey]);
+  printf("after delete entitiesKey[%d] = %d\n", entityCount, entitiesKeys[entityCount]);
+
+  printf("\n");
+  for (int i = 0; i < 5; i++) {
+    printf("%d->%d ", i, entitiesKeys[i]);
+  }
+  printf("\nsigs:\n");
+  for (int i = 0; i < 5; i++) {
+    printf("%d ", entitiesValues[i]);
+  }
+  printf("\n");
 }
 
 int ecsEntityExists(entity_t entity) {
-  return entities[entity] != 0;
+  entity_t real = entitiesKeys[entity];
+  return (real == ENTITY_NULL) ? 0 : 1;
 }
 
-void ecsAddComponent(entity_t entity, int component, void *data) {
+void ecsAddComponent(entity_t entityKey, int component, void *data) {
+  entity_t entity = entitiesKeys[entityKey];
   assert(components);
   assert(component >= 0 && component < maxComponents);
   assert(components[component].data);
@@ -90,7 +148,7 @@ void ecsAddComponent(entity_t entity, int component, void *data) {
   }
 
   // update signature
-  entities[entity] ^= ecsGetSignature(component);
+  entitiesValues[entity] ^= ecsGetSignature(component);
 }
 
 void ecsRegisterComponent(int component, unsigned long nbytes) {
@@ -115,15 +173,18 @@ void ecsUpdate(double deltatime) {
   // TODO update this
   for (int i = 0; i < systemCount; i++) {
     system_t system = systems[i];
-    for (int j = 0; j < entityCount; j++) {
-      if ((entities[j] & system.signature) == system.signature) {
+    for (int j = 0; j < maxEntities; j++) {
+      if (!ecsEntityExists(j)) continue;
+      entity_t e = entitiesKeys[j];
+      if ((entitiesValues[e] & system.signature) == system.signature) {
         system.callback(j, deltatime);
       }
     }
   }
 }
 
-void *ecsGetComponent(entity_t entity, int component) {
+void *ecsGetComponent(entity_t entityKey, int component) {
+  entity_t entity = entitiesKeys[entityKey];
   assert(components);
   assert(component >= 0 && component < maxComponents);
 

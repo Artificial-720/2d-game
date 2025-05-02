@@ -123,6 +123,16 @@ void update(double deltatime) {
 
 
 void gameInit() {
+  entity_t t1 = ecsCreateEntity();
+  entity_t t2 = ecsCreateEntity();
+  entity_t t3 = ecsCreateEntity();
+  printf("before delete of t2: %d\n", t2);
+  ecsDeleteEntity(t2);
+  printf("before delete of t3: %d\n", t3);
+  ecsDeleteEntity(t3);
+  (void)t1;
+
+
   unsigned int textureId;
   r2dCreateTexture(renderer, "assets/image.png", &textureId);
 

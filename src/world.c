@@ -1,6 +1,5 @@
 #include "world.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "components.h"
@@ -20,6 +19,7 @@ static int worldCorrdsToIndex(int x, int y) {
 
 static void createTileEntity(tile_t *tile, int x, int y) {
   entity_t box = ecsCreateEntity();
+  // printf("create tile got %d\n", box);
   Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = 1}; // fix this texture id stuff
   transform_t transform = {.position = (vec3){x, y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
   rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
@@ -33,7 +33,7 @@ static void createTileEntity(tile_t *tile, int x, int y) {
   tile->loaded = 1;
 }
 
-static void remoteTileEntity(tile_t *tile) {
+static void removeTileEntity(tile_t *tile) {
   ecsDeleteEntity(tile->entityId);
   tile->entityId = 0;
   tile->loaded = 0;
@@ -83,7 +83,7 @@ void worldUnloadTiles(world_t *world) {
     int x, y;
     indexToWorldCoords(i, &x, &y);
     if (x  < camera.pos.x - TILE_LOAD_DISTANCE || x > camera.pos.x + TILE_LOAD_DISTANCE) {
-      remoteTileEntity(&world->tiles[i]);
+      removeTileEntity(&world->tiles[i]);
     }
   }
 }
