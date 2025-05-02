@@ -7,15 +7,19 @@
 #include "physics.h"  // handles 2d physics and collisions resolution
 #include "camera.h"   // handles camera position and movement
 
-#include "chunk.h"    // world tiles
-
 #include "components.h" // ECS - the components
 #include "systems.h"    // ECS - the systems definitions
+#include "world.h"
+
+#define PLAYER_START_X 10
+#define PLAYER_START_Y 10
 
 window_t *window;
 Render2d *renderer;
 camera_t camera;
 entity_t player;
+world_t world;
+
 
 int initialize() {
   int screenWidth = 1028;
@@ -45,6 +49,7 @@ int initialize() {
 }
 
 void terminate() {
+  worldTerminate(&world);
   windowTerminate(window);
   r2dTerminate(renderer);
   ecsTerminate();
@@ -56,9 +61,9 @@ void update(double deltatime) {
   // player input
   rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(player, RIGIDBODY);
   if (getKey(window, KEY_A) == HELD) {
-    rb->velocity.x = -2.0f;
+    rb->velocity.x = -4.0f;
   } else if (getKey(window, KEY_D) == HELD) {
-    rb->velocity.x = 2.0f;
+    rb->velocity.x = 4.0f;
   }
   if (getKey(window, KEY_SPACE) == HELD) {
     if (rb->velocity.y < 0.01)
@@ -106,6 +111,10 @@ void update(double deltatime) {
   transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
   cameraUpdatePosition(&camera, tf->position.x, tf->position.y);
   // printf("player pos: %f %f\n", tf->position.x, tf->position.y);
+
+
+  worldLoadTiles(&world);
+  worldUnloadTiles(&world);
 }
 
 
@@ -116,7 +125,7 @@ void gameInit() {
   // Create our player entity
   player = ecsCreateEntity();
   Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
-  transform_t transform = {.position = (vec3){10.0f, 23.0f, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
+  transform_t transform = {.position = (vec3){PLAYER_START_X, PLAYER_START_Y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
   rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .force = (vec3){0, 0, 0}, .mass = 1.0f};
   collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
   float gravity = 9.81f;
@@ -126,16 +135,20 @@ void gameInit() {
   ecsAddComponent(player, GRAVITY, (void*)&gravity);
   ecsAddComponent(player, COLLIDER, (void*)&collider);
 
+
+  world = worldGenerate();
+  worldLoadTiles(&world);
+
   // load first chunk
-  entity_t chunk = ecsCreateEntity();
-  ecsAddComponent(chunk, CHUNK, (void*)0);
-  chunk_t *chunkData = ecsGetComponent(chunk, CHUNK);
-  chunkData->x = 0;
-  chunkData->y = 0;
-  for (int i = 0; i < CHUNK_WIDTH * CHUNK_HEIGHT; i++) chunkData->tiles[i] = (tile_t){.id = 0};
-  for (int i = 0; i < CHUNK_WIDTH; i++) {
-    placeTile(chunkData, i, 20);
-  }
+  // entity_t chunk = ecsCreateEntity();
+  // ecsAddComponent(chunk, CHUNK, (void*)0);
+  // chunk_t *chunkData = ecsGetComponent(chunk, CHUNK);
+  // chunkData->x = 0;
+  // chunkData->y = 0;
+  // for (int i = 0; i < CHUNK_WIDTH * CHUNK_HEIGHT; i++) chunkData->tiles[i] = (tile_t){.id = 0};
+  // for (int i = 0; i < CHUNK_WIDTH; i++) {
+  //   placeTile(chunkData, i, 20);
+  // }
 
 }
 
@@ -160,11 +173,11 @@ int main() {
   ecsRegisterComponent(TRANSFORM, sizeof(transform_t));
   ecsRegisterComponent(COLLIDER, sizeof(collider_t));
   ecsRegisterComponent(GRAVITY, sizeof(float));
-  ecsRegisterComponent(CHUNK, sizeof(chunk_t));
+  // ecsRegisterComponent(CHUNK, sizeof(chunk_t));
   ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY) | ecsGetSignature(GRAVITY), physicsSystem);
   ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(SPRITE), renderSystem);
-  ecsRegisterSystem(ecsGetSignature(CHUNK), chunkLoadSystem);
-  ecsRegisterSystem(ecsGetSignature(CHUNK), chunkUpdateSystem);
+  // ecsRegisterSystem(ecsGetSignature(CHUNK), chunkLoadSystem);
+  // ecsRegisterSystem(ecsGetSignature(CHUNK), chunkUpdateSystem);
 
   gameInit();
 

@@ -33,7 +33,7 @@ int componentCount;
 
 int ecsInit() {
   entityCount = 0;
-  maxEntities = 100;
+  maxEntities = 1000;
   entities = (int*)malloc(maxEntities * sizeof(int));
 
   maxSystems = 32;
@@ -64,6 +64,7 @@ entity_t ecsCreateEntity() {
   entity_t e = entityCount;
   entityCount++;
   entities[e] = 0;
+  assert(entityCount < maxEntities);
   return e;
 }
 
