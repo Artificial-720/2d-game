@@ -14,9 +14,9 @@ static void indexToWorldCoords(int index, int *x, int *y) {
   *x = index % WORLD_WIDTH;
   *y = index / WORLD_WIDTH;
 }
-// static int worldCorrdsToIndex(int x, int y) {
-//   return x + WORLD_WIDTH * y;
-// }
+static int worldCorrdsToIndex(int x, int y) {
+  return x + WORLD_WIDTH * y;
+}
 
 static void createTileEntity(tile_t *tile, int x, int y) {
   entity_t box = ecsCreateEntity();
@@ -88,3 +88,15 @@ void worldUnloadTiles(world_t *world) {
   }
 }
 
+void worldTranslateToGrid(float x, float y, int *tileX, int *tileY) {
+  *tileX = (int)x;
+  *tileY = (int)(y + 1);
+}
+
+void worldPlaceTile(world_t *world, int x, int y, enum tile_type type) {
+  int index = worldCorrdsToIndex(x, y);
+
+  if (world->tiles[index].type == TILE_EMPTY) {
+    world->tiles[index].type = type;
+  }
+}

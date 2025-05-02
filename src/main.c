@@ -9,7 +9,7 @@
 
 #include "components.h" // ECS - the components
 #include "systems.h"    // ECS - the systems definitions
-#include "world.h"
+#include "world.h"      // Holds world tile information
 
 #define PLAYER_START_X 10
 #define PLAYER_START_Y 10
@@ -90,18 +90,22 @@ void update(double deltatime) {
   }
 
   // click input
-  // if (getMouseButton(window, MOUSE_BUTTON_LEFT) == PRESS) {
-  //   double xpos, ypos;
-  //   getCursorPos(window, &xpos, &ypos);
-  //   vec4 worldPos = screenToWorld(&camera, xpos, ypos);
-  //   placeTile(&chunk, worldPos.x, worldPos.y);
-  // }
-  // if (getMouseButton(window, MOUSE_BUTTON_RIGHT) == PRESS) {
-  //   double xpos, ypos;
-  //   getCursorPos(window, &xpos, &ypos);
-  //   vec4 worldPos = screenToWorld(&camera, xpos, ypos);
-  //   removeTile(&chunk, worldPos.x, worldPos.y);
-  // }
+  if (getMouseButton(window, MOUSE_BUTTON_LEFT) == PRESS) {
+    double xpos, ypos;
+    getCursorPos(window, &xpos, &ypos);
+    vec4 worldPos = screenToWorld(&camera, xpos, ypos);
+    int tileX, tileY;
+    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
+    worldPlaceTile(&world, tileX, tileY, TILE_GRASS);
+  }
+  if (getMouseButton(window, MOUSE_BUTTON_RIGHT) == PRESS) {
+    double xpos, ypos;
+    getCursorPos(window, &xpos, &ypos);
+    vec4 worldPos = screenToWorld(&camera, xpos, ypos);
+    int tileX, tileY;
+    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
+    worldPlaceTile(&world, tileX, tileY, TILE_EMPTY);
+  }
 
   // physics(deltatime);
 
@@ -135,21 +139,9 @@ void gameInit() {
   ecsAddComponent(player, GRAVITY, (void*)&gravity);
   ecsAddComponent(player, COLLIDER, (void*)&collider);
 
-
+  // Create our world and load the area around the player
   world = worldGenerate();
   worldLoadTiles(&world);
-
-  // load first chunk
-  // entity_t chunk = ecsCreateEntity();
-  // ecsAddComponent(chunk, CHUNK, (void*)0);
-  // chunk_t *chunkData = ecsGetComponent(chunk, CHUNK);
-  // chunkData->x = 0;
-  // chunkData->y = 0;
-  // for (int i = 0; i < CHUNK_WIDTH * CHUNK_HEIGHT; i++) chunkData->tiles[i] = (tile_t){.id = 0};
-  // for (int i = 0; i < CHUNK_WIDTH; i++) {
-  //   placeTile(chunkData, i, 20);
-  // }
-
 }
 
 
@@ -173,11 +165,8 @@ int main() {
   ecsRegisterComponent(TRANSFORM, sizeof(transform_t));
   ecsRegisterComponent(COLLIDER, sizeof(collider_t));
   ecsRegisterComponent(GRAVITY, sizeof(float));
-  // ecsRegisterComponent(CHUNK, sizeof(chunk_t));
   ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY) | ecsGetSignature(GRAVITY), physicsSystem);
   ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(SPRITE), renderSystem);
-  // ecsRegisterSystem(ecsGetSignature(CHUNK), chunkLoadSystem);
-  // ecsRegisterSystem(ecsGetSignature(CHUNK), chunkUpdateSystem);
 
   gameInit();
 
