@@ -58,27 +58,23 @@ int gameInit() {
   return 0;
 }
 
-int gameFrame(double dt) {
+int gameFrame(double dt, input_t *input, output_t *output) {
   transform_t *tf = (transform_t*)ecsGetComponent(gameState.player, TRANSFORM);
+
+  // full screen toggle
+  if (input->keyStates[KEY_F] == KEY_PRESS) {
+    output->toggleFullScreen = 1;
+  }
+
+  // player movement
+  playerSystem(gameState.player, input);
 
   // update physics
   physicsSystem(dt);
 
   // render
-  float h = 30;
-  float w = h * ((float)1028 / 720);
-  gameState.camera.width = 1028;
-  gameState.camera.height = 720;
-  gameState.camera.projection = orthographic(
-    -w / (2 * gameState.camera.zoomFactor), w / (2 * gameState.camera.zoomFactor),
-    -h / (2 * gameState.camera.zoomFactor), h / (2 * gameState.camera.zoomFactor),
-    -1, 1
-  );
-  cameraUpdatePosition(&gameState.camera, tf->position.x, tf->position.y);
-  r2dSetView(gameState.camera.view);
-  r2dSetProjection(gameState.camera.projection);
+  cameraSystem(&gameState.camera, gameState.player, input);
   spriteSystem();
-
 
   // load world
   worldLoadTiles(&gameState.world, tf->position.x);

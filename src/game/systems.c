@@ -90,3 +90,33 @@ void physicsSystem(double dt) {
 
   free(entities);
 }
+
+void playerSystem(entity_t player, input_t *input) {
+  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(player, RIGIDBODY);
+  if (input->keyStates[KEY_A] == KEY_HELD) {
+    rb->velocity.x = -4.0f;
+  } else if (input->keyStates[KEY_D] == KEY_HELD) {
+    rb->velocity.x = 4.0f;
+  }
+  if (input->keyStates[KEY_SPACE] == KEY_HELD) {
+    if (rb->velocity.y < 0.01) {
+      rb->force.y = 500;
+    }
+  }
+}
+
+void cameraSystem(camera_t *camera, entity_t player, input_t *input) {
+  camera->width = input->windowWidth;
+  camera->height = input->windowHeight;
+  float h = 30;
+  float w = h * ((float)camera->width / camera->height);
+  camera->projection = orthographic(
+    -w / (2 * camera->zoomFactor), w / (2 * camera->zoomFactor),
+    -h / (2 * camera->zoomFactor), h / (2 * camera->zoomFactor),
+    -1, 1
+  );
+  transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
+  cameraUpdatePosition(camera, tf->position.x, tf->position.y);
+  r2dSetView(camera->view);
+  r2dSetProjection(camera->projection);
+}

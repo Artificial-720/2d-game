@@ -1,4 +1,5 @@
 #include "window.h"
+#include "input.h"
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
@@ -6,6 +7,50 @@ static int initWidth;
 static int initHeight;
 static int keyLocks[256];
 
+static void toggleFullScreen(window_t *window) {
+  GLFWmonitor *monitor = glfwGetWindowMonitor(window);
+  if (monitor) {
+    glfwSetWindowMonitor(window, NULL, 50, 50, initWidth, initHeight, 0);
+  } else {
+    GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
+    if (primaryMonitor) {
+      const GLFWvidmode *mode = glfwGetVideoMode(primaryMonitor);
+      glfwSetWindowMonitor(window, primaryMonitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+    }
+  }
+}
+
+static int getKey(window_t *window, int keyCode) {
+  int keyState = glfwGetKey(window, keyCode);
+  if (keyState == GLFW_PRESS) {
+    if (keyLocks[keyCode]) {
+      return KEY_HELD;
+    } else {
+      keyLocks[keyCode] = 1;
+      return KEY_PRESS;
+    }
+  } else {
+    if (keyLocks[keyCode]) {
+      keyLocks[keyCode] = 0;
+    }
+    return KEY_RELEASE;
+  }
+  return keyState;
+}
+
+// static int getMouseButton(window_t *window, int button) {
+//   if (glfwGetMouseButton(window, button) == GLFW_PRESS) {
+//     return PRESS;
+//   }
+//   return RELEASE;
+// }
+// void windowSetScrollCallback(window_t *window, void (*callback)()) {
+//   glfwSetScrollCallback(window, callback);
+// }
+
+// void getCursorPos(window_t *window, double *xpos, double *ypos) {
+//   glfwGetCursorPos(window, xpos, ypos);
+// }
 
 
 GLFWwindow *windowInit(int width, int height, const char* title) {
@@ -39,7 +84,8 @@ GLFWwindow *windowInit(int width, int height, const char* title) {
     glfwTerminate();
     return 0;
   }
-return window;
+
+  return window;
 }
 
 void windowTerminate(GLFWwindow *window) {
@@ -55,7 +101,7 @@ void windowSwapBuffers(window_t *window) {
   glfwSwapBuffers(window);
 }
 
-int updateWindowViewport(GLFWwindow *window, int *width, int *height) {
+int windowUpdateViewport(window_t *window, int *width, int *height) {
   int w, h;
   glfwGetFramebufferSize(window, &w, &h);
   if (*width != w || *height != h) {
@@ -67,56 +113,22 @@ int updateWindowViewport(GLFWwindow *window, int *width, int *height) {
   return 0;
 }
 
-int getKey(window_t *window, int keyCode) {
-  int keyState = glfwGetKey(window, keyCode);
-  if (keyState == GLFW_PRESS) {
-    if (keyLocks[keyCode]) {
-      return HELD;
-    } else {
-      keyLocks[keyCode] = 1;
-      return PRESS;
-    }
-  } else {
-    if (keyLocks[keyCode]) {
-      keyLocks[keyCode] = 0;
-    }
-    return RELEASE;
-  }
-  return keyState;
-}
-
-void pollInput() {
-  glfwPollEvents();
-}
-
 double getTime() {
   return glfwGetTime();
 }
 
-void toggleFullScreen(window_t *window) {
-  GLFWmonitor *monitor = glfwGetWindowMonitor(window);
-  if (monitor) {
-    glfwSetWindowMonitor(window, NULL, 50, 50, initWidth, initHeight, 0);
-  } else {
-    GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
-    if (primaryMonitor) {
-      const GLFWvidmode *mode = glfwGetVideoMode(primaryMonitor);
-      glfwSetWindowMonitor(window, primaryMonitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-    }
+void pollInput(window_t *window, input_t *input) {
+  glfwPollEvents();
+
+  for (int i = GLFW_KEY_A; i < GLFW_KEY_Z + 1; i++) {
+    input->keyStates[i - GLFW_KEY_A] = getKey(window, i);
   }
+
+  input->keyStates[KEY_SPACE] = getKey(window, GLFW_KEY_SPACE);
 }
 
-void windowSetScrollCallback(window_t *window, void (*callback)()) {
-  glfwSetScrollCallback(window, callback);
-}
-
-int getMouseButton(window_t *window, int button) {
-  if (glfwGetMouseButton(window, button) == GLFW_PRESS) {
-    return PRESS;
+void processGameOutput(window_t *window, output_t *output) {
+  if (output->toggleFullScreen) {
+    toggleFullScreen(window);
   }
-  return RELEASE;
-}
-
-void getCursorPos(window_t *window, double *xpos, double *ypos) {
-  glfwGetCursorPos(window, xpos, ypos);
 }
