@@ -1,27 +1,12 @@
 #include <stdio.h>
 
-#include "math.h"
-#include "window.h"   // window and input
-#include "ecs.h"      // Entity Component System
-#include "render2d.h" // OpenGL
-#include "physics.h"  // handles 2d physics and collisions resolution
-#include "camera.h"   // handles camera position and movement
-
-#include "components.h" // ECS - the components
-// #include "systems.h"    // ECS - the systems definitions
-#include "world.h"      // Holds world tile information
-
-#define PLAYER_START_X 10
-#define PLAYER_START_Y 10
+#include "game/game.h"
+#include "platform/window.h"
+#include "platform/renderer2d.h"
 
 window_t *window;
-Render2d *renderer;
-camera_t camera;
-entity_t player;
-world_t world;
 
-
-int initialize() {
+int main() {
   int screenWidth = 1028;
   int screenHeight = 720;
   window = windowInit(screenWidth, screenHeight, "2d Game!");
@@ -30,156 +15,16 @@ int initialize() {
     return 1;
   }
 
-  if (ecsInit()) {
+  if (r2dInit()) {
     windowTerminate(window);
     return 1;
   }
 
-  renderer = r2dInit();
-  if (!renderer) {
+  if (gameInit()) {
+    windowTerminate(window);
+    r2dTerminate();
     return 1;
   }
-
-  float h = 30;
-  float w = h * ((float)screenWidth / screenHeight);
-  renderer->projection = orthographic(0, w, 0, h, 0, 1);
-  camera = cameraInit();
-
-  return 0;
-}
-
-void terminate() {
-  worldTerminate(&world);
-  windowTerminate(window);
-  r2dTerminate(renderer);
-  ecsTerminate();
-}
-
-
-
-void update(double deltatime) {
-  // player input
-  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(player, RIGIDBODY);
-  if (getKey(window, KEY_A) == HELD) {
-    rb->velocity.x = -4.0f;
-  } else if (getKey(window, KEY_D) == HELD) {
-    rb->velocity.x = 4.0f;
-  }
-  if (getKey(window, KEY_SPACE) == HELD) {
-    if (rb->velocity.y < 0.01)
-      rb->force.y = 500;
-    // rb->force.y = 500;
-    // rb->velocity.y = 50;
-  }
-
-  // game input toggle fullscreen
-  if (getKey(window, KEY_F) == PRESS) {
-    toggleFullScreen(window);
-  }
-  int width, height;
-  if (updateWindowViewport(window, &width, &height)) {
-    float h = 30.0f;
-    float w = h * ((float)width / height);
-    camera.width = width;
-    camera.height = height;
-    camera.projection = orthographic(
-      -w / (2 * camera.zoomFactor), w / (2 * camera.zoomFactor),
-      -h / (2 * camera.zoomFactor), h / (2 * camera.zoomFactor),
-      -1, 1
-    );
-  }
-
-  // click input
-  if (getMouseButton(window, MOUSE_BUTTON_LEFT) == PRESS) {
-    double xpos, ypos;
-    getCursorPos(window, &xpos, &ypos);
-    vec4 worldPos = screenToWorld(&camera, xpos, ypos);
-    int tileX, tileY;
-    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
-    worldPlaceTile(&world, tileX, tileY, TILE_GRASS);
-  }
-  if (getMouseButton(window, MOUSE_BUTTON_RIGHT) == PRESS) {
-    double xpos, ypos;
-    getCursorPos(window, &xpos, &ypos);
-    vec4 worldPos = screenToWorld(&camera, xpos, ypos);
-    int tileX, tileY;
-    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
-    worldPlaceTile(&world, tileX, tileY, TILE_EMPTY);
-  }
-
-  // physics(deltatime);
-
-  // ecsUpdate(deltatime);
-  (void)deltatime;
-
-  // Update camera position
-  transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
-  cameraUpdatePosition(&camera, tf->position.x, tf->position.y);
-  // printf("player pos: %f %f\n", tf->position.x, tf->position.y);
-
-
-  worldLoadTiles(&world);
-  worldUnloadTiles(&world);
-}
-
-
-void gameInit() {
-  entity_t t1 = ecsCreateEntity();
-  entity_t t2 = ecsCreateEntity();
-  entity_t t3 = ecsCreateEntity();
-  printf("before delete of t2: %d\n", t2);
-  ecsDeleteEntity(t2);
-  printf("before delete of t3: %d\n", t3);
-  ecsDeleteEntity(t3);
-  (void)t1;
-
-
-  unsigned int textureId;
-  r2dCreateTexture(renderer, "assets/image.png", &textureId);
-
-  // Create our player entity
-  player = ecsCreateEntity();
-  Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
-  transform_t transform = {.position = (vec3){PLAYER_START_X, PLAYER_START_Y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
-  rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .force = (vec3){0, 0, 0}, .mass = 1.0f};
-  collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
-  float gravity = 9.81f;
-  ecsAddComponent(player, SPRITE, (void*)&sprite);
-  ecsAddComponent(player, RIGIDBODY, (void*)&rb);
-  ecsAddComponent(player, TRANSFORM, (void*)&transform);
-  ecsAddComponent(player, GRAVITY, (void*)&gravity);
-  ecsAddComponent(player, COLLIDER, (void*)&collider);
-
-  // Create our world and load the area around the player
-  world = worldGenerate();
-  worldLoadTiles(&world);
-}
-
-
-void scrollCallback(window_t *window, double xoffset, double yoffset) {
-  (void)window;
-  (void)xoffset;
-  float newZoom = camera.zoomFactor + yoffset / 10;
-  camera.zoomFactor = clamp(newZoom, 1.0f, 3.0f);
-}
-
-int main() {
-  if (initialize()) {
-    terminate();
-    return 0;
-  }
-
-  windowSetScrollCallback(window, scrollCallback);
-
-  ecsRegisterComponent(SPRITE, sizeof(Sprite));
-  ecsRegisterComponent(RIGIDBODY, sizeof(rigidbody_t));
-  ecsRegisterComponent(TRANSFORM, sizeof(transform_t));
-  ecsRegisterComponent(COLLIDER, sizeof(collider_t));
-  ecsRegisterComponent(GRAVITY, sizeof(float));
-  // ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(RIGIDBODY) | ecsGetSignature(GRAVITY), physicsSystem);
-  // ecsRegisterSystem(ecsGetSignature(TRANSFORM) | ecsGetSignature(SPRITE), renderSystem);
-
-  gameInit();
 
   double previousTime = getTime();
   while(!windowShouldClose(window)) {
@@ -189,11 +34,16 @@ int main() {
 
     pollInput();
     r2dClear();
-    update(deltatime);
+
+    gameFrame(deltatime);
+
     windowSwapBuffers(window);
   }
 
-  terminate();
+  windowTerminate(window);
+  r2dTerminate();
+
+  gameTerminate();
 
   return 0;
 }

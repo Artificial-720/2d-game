@@ -2,9 +2,10 @@ NAME = game
 CFLAGS = -std=c99 -Wall -Wextra -Werror -g
 LIBFLAGS = -lGL -lglfw -lGLEW -lm
 SRC_DIR := src
+SUBDIRS := $(SRC_DIR) $(SRC_DIR)/game $(SRC_DIR)/platform $(SRC_DIR)/core
 
-SRC := $(wildcard $(SRC_DIR)/*.c)
-OBJS := $(SRC:$(SRC_DIR)/%.c=$(SRC_DIR)/%.o)
+SRC := $(foreach dir, $(SUBDIRS), $(wildcard $(dir)/*.c))
+OBJS := $(SRC:.c=.o)
 
 
 all: $(OBJS)
@@ -12,4 +13,4 @@ all: $(OBJS)
 
 
 clean:
-	rm $(NAME) src/*.o
+	rm $(NAME) $(OBJS)

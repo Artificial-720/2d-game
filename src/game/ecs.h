@@ -19,6 +19,6 @@ static inline unsigned int ecsGetSignature(int component) {return 0x1 << compone
 
 int ecsGetCount();
 int ecsHasComponent(entity_t entity, int component);
-entity_t *ecsQuery(unsigned int signature);
+entity_t *ecsQuery(unsigned int signature, int *count);
 
 #endif

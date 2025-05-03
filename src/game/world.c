@@ -4,10 +4,8 @@
 
 #include "components.h"
 #include "ecs.h"
-#include "render2d.h"
 #include "physics.h"
-#include "camera.h"
-extern camera_t camera;
+#include "../platform/sprite.h"
 
 static void indexToWorldCoords(int index, int *x, int *y) {
   *x = index % WORLD_WIDTH;
@@ -20,12 +18,12 @@ static int worldCorrdsToIndex(int x, int y) {
 static void createTileEntity(tile_t *tile, int x, int y) {
   entity_t box = ecsCreateEntity();
   // printf("create tile got %d\n", box);
-  Sprite sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = 1}; // fix this texture id stuff
+  sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = 1}; // fix this texture id stuff
   transform_t transform = {.position = (vec3){x, y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
-  rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
+  // rigidbody_t rb = {.velocity = (vec3){0, 0, 0}};
   collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
   ecsAddComponent(box, SPRITE, (void*)&sprite);
-  ecsAddComponent(box, RIGIDBODY, (void*)&rb);
+  // ecsAddComponent(box, RIGIDBODY, (void*)&rb);
   ecsAddComponent(box, TRANSFORM, (void*)&transform);
   ecsAddComponent(box, COLLIDER, (void*)&collider);
 
@@ -62,27 +60,27 @@ void worldTerminate(world_t *world) {
   free(world->tiles);
 }
 
-void worldLoadTiles(world_t *world) {
+void worldLoadTiles(world_t *world, int cameraX) {
   for (int i = 0; i < WORLD_TILE_COUNT; i++) {
     if (world->tiles[i].type == TILE_EMPTY) continue;
     if (world->tiles[i].loaded) continue;
 
     int x, y;
     indexToWorldCoords(i, &x, &y);
-    if (x  > camera.pos.x - TILE_LOAD_DISTANCE && x < camera.pos.x + TILE_LOAD_DISTANCE) {
+    if (x  > cameraX - TILE_LOAD_DISTANCE && x < cameraX + TILE_LOAD_DISTANCE) {
       createTileEntity(&world->tiles[i], x, y);
     }
   }
 }
 
-void worldUnloadTiles(world_t *world) {
+void worldUnloadTiles(world_t *world, int cameraX) {
   for (int i = 0; i < WORLD_TILE_COUNT; i++) {
     if (world->tiles[i].type == TILE_EMPTY) continue;
     if (!world->tiles[i].loaded) continue;
 
     int x, y;
     indexToWorldCoords(i, &x, &y);
-    if (x  < camera.pos.x - TILE_LOAD_DISTANCE || x > camera.pos.x + TILE_LOAD_DISTANCE) {
+    if (x  < cameraX - TILE_LOAD_DISTANCE || x > cameraX + TILE_LOAD_DISTANCE) {
       removeTileEntity(&world->tiles[i]);
     }
   }

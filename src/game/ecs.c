@@ -28,7 +28,7 @@ int ecsInit() {
   signatures = (unsigned int*)malloc(maxEntities * sizeof(unsigned int));
   for (int i = 0; i < maxEntities; i++) {
     entitiesMap[i] = 0;
-    signatures[i] = i;
+    signatures[i] = 0;
   }
 
   maxComponents = 8;
@@ -134,5 +134,44 @@ void ecsRegisterComponent(int component, unsigned long nbytes) {
   componentCount++;
 }
 
+entity_t *ecsQuery(unsigned int signature, int *count) {
+  int total = 0;
+  entity_t *list;
+
+  // count how many
+  for (int i = 0; i < maxEntities; i++) {
+    entity_t key = entitiesMap[i];
+    if (!key) continue; // key empty
+    if ((signatures[key] & signature) == signature) {
+      total++;
+    }
+  }
+
+  list = (entity_t*)malloc(total * sizeof(entity_t));
+
+  int next = 0;
+  // populate
+  for (int i = 1; i < maxEntities; i++) {
+    entity_t key = entitiesMap[i];
+    if (!key) continue; // key empty
+    if ((signatures[key] & signature) == signature) {
+      list[next++] = i;
+    }
+  }
+
+  *count = total;
+  return list;
+}
+
+int ecsHasComponent(entity_t entity, int component) {
+  assert(components);
+  assert(component >= 0 && component < maxComponents);
+  entity_t value = entitiesMap[entity];
+
+  char *componentData = (char*)components[component].data;
+  componentData += value * components[component].nbytes;
+
+  return componentData ? 1 : 0;
+}
 
 

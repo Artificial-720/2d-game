@@ -1,7 +1,7 @@
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
-#include "math.h"
+#include "../core/math.h"
 
 typedef struct {
   vec3 velocity;

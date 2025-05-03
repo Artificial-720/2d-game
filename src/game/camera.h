@@ -1,7 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "math.h"
+#include "../core/math.h"
 
 typedef struct {
   vec2 pos;
