@@ -38,12 +38,13 @@ static int getKey(window_t *window, int keyCode) {
   return keyState;
 }
 
-// static int getMouseButton(window_t *window, int button) {
-//   if (glfwGetMouseButton(window, button) == GLFW_PRESS) {
-//     return PRESS;
-//   }
-//   return RELEASE;
-// }
+static int getMouseButton(window_t *window, int button) {
+  if (glfwGetMouseButton(window, button) == GLFW_PRESS) {
+    return KEY_PRESS;
+  }
+  return KEY_RELEASE;
+}
+
 // void windowSetScrollCallback(window_t *window, void (*callback)()) {
 //   glfwSetScrollCallback(window, callback);
 // }
@@ -117,6 +118,12 @@ double getTime() {
   return glfwGetTime();
 }
 
+void processGameOutput(window_t *window, output_t *output) {
+  if (output->toggleFullScreen) {
+    toggleFullScreen(window);
+  }
+}
+
 void pollInput(window_t *window, input_t *input) {
   glfwPollEvents();
 
@@ -125,10 +132,10 @@ void pollInput(window_t *window, input_t *input) {
   }
 
   input->keyStates[KEY_SPACE] = getKey(window, GLFW_KEY_SPACE);
+
+  // mouse
+  glfwGetCursorPos(window, &input->mouseX, &input->mouseY);
+  input->mouseStates[MOUSE_BUTTON_LEFT] = getMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+  input->mouseStates[MOUSE_BUTTON_RIGHT] = getMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
 }
 
-void processGameOutput(window_t *window, output_t *output) {
-  if (output->toggleFullScreen) {
-    toggleFullScreen(window);
-  }
-}

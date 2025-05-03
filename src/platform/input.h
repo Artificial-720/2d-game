@@ -21,14 +21,22 @@ enum keyCodes {
   KEY_COUNT
 };
 
+enum mouseCodes {
+  MOUSE_BUTTON_LEFT = 0, MOUSE_BUTTON_RIGHT = 1,
+
+  MOUSE_COUNT
+};
+
 enum keyState {
   KEY_RELEASE, KEY_HELD, KEY_PRESS
 };
 
 typedef struct {
   int keyStates[KEY_COUNT];
+  int mouseStates[MOUSE_COUNT];
   int scroll;
   int windowWidth, windowHeight;
+  double mouseX, mouseY;
 } input_t;
 
 #endif

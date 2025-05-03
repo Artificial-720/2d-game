@@ -20,6 +20,6 @@ void windowSwapBuffers(window_t *window);
 int windowUpdateViewport(window_t *window, int *width, int *height);
 void pollInput(window_t *window, input_t *input);
 void processGameOutput(window_t *window, output_t *output);
-double getTime();
+double getTime(); // in seconds
 
 #endif

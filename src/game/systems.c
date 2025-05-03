@@ -4,6 +4,7 @@
 #include "physics.h"
 #include "components.h"
 #include "../platform/renderer2d.h"
+#include "world.h"
 
 #include <stdlib.h>
 
@@ -91,7 +92,8 @@ void physicsSystem(double dt) {
   free(entities);
 }
 
-void playerSystem(entity_t player, input_t *input) {
+void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *world) {
+  // move player
   rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(player, RIGIDBODY);
   if (input->keyStates[KEY_A] == KEY_HELD) {
     rb->velocity.x = -4.0f;
@@ -103,6 +105,21 @@ void playerSystem(entity_t player, input_t *input) {
       rb->force.y = 500;
     }
   }
+
+  // click input
+  if (input->mouseStates[MOUSE_BUTTON_LEFT] == KEY_PRESS) {
+    vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
+    int tileX, tileY;
+    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
+    worldPlaceTile(world, tileX, tileY, TILE_GRASS);
+  }
+  if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
+    vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
+    int tileX, tileY;
+    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
+    worldPlaceTile(world, tileX, tileY, TILE_EMPTY);
+  }
+
 }
 
 void cameraSystem(camera_t *camera, entity_t player, input_t *input) {

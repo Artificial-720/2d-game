@@ -67,7 +67,7 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   }
 
   // player movement
-  playerSystem(gameState.player, input);
+  inputSystem(gameState.player, input, &gameState.camera, &gameState.world);
 
   // update physics
   physicsSystem(dt);
