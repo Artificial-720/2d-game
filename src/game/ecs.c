@@ -23,7 +23,7 @@ int componentCount;
 
 int ecsInit() {
   entityCount = 0;
-  maxEntities = 100;
+  maxEntities = 1000;
   entitiesMap = (entity_t*)malloc(maxEntities * sizeof(entity_t));
   signatures = (unsigned int*)malloc(maxEntities * sizeof(unsigned int));
   for (int i = 0; i < maxEntities; i++) {
@@ -62,6 +62,7 @@ entity_t ecsCreateEntity() {
       break;
     }
   }
+  assert(result != 0);
 
   return result;
 }
@@ -69,9 +70,6 @@ entity_t ecsCreateEntity() {
 
 void ecsDeleteEntity(entity_t entity) {
   entity_t value = entitiesMap[entity];
-
-  // clear map
-  entitiesMap[entity] = 0;
 
   // compact data
   // dont move anything if last value in array
@@ -86,9 +84,24 @@ void ecsDeleteEntity(entity_t entity) {
       }
     }
 
+    // actually move the data
     signatures[value] = signatures[entityCount];
+    for (int i = 0; i < componentCount; i++) {
+      unsigned long nbytes = components[i].nbytes;
+      char *desData = (char*)ecsGetComponent(entity, i);
+      char *srcData = (char*)ecsGetComponent(key, i);
+      for (unsigned long byte = 0; byte < nbytes; byte++) {
+        desData[byte] = srcData[byte];
+        srcData[byte] = 0;
+      }
+    }
+
+    // update the key
     entitiesMap[key] = value;
   }
+
+  // clear map
+  entitiesMap[entity] = 0;
 
   entityCount--;
 }
@@ -107,7 +120,7 @@ void ecsAddComponent(entity_t entity, int component, void *data) {
   }
 
   // update signature
-  signatures[value] ^= ecsGetSignature(component);
+  signatures[value] |= ecsGetSignature(component);
 }
 
 void *ecsGetComponent(entity_t entity, int component) {

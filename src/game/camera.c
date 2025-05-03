@@ -1,5 +1,4 @@
 #include "camera.h"
-#include "math.h"
 
 camera_t cameraInit() {
   camera_t camera = {
