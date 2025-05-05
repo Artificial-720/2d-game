@@ -6,9 +6,8 @@
 #include "components.h"
 #include "systems.h"
 #include "camera.h"
-#include "../platform/renderer2d.h"
-
-#include <stdio.h>
+#include "texture.h"
+#include "../platform/sprite.h"
 
 #define PLAYER_START_X 10
 #define PLAYER_START_Y 10
@@ -31,12 +30,12 @@ int gameInit() {
   ecsRegisterComponent(COLLIDER, sizeof(collider_t));
   ecsRegisterComponent(GRAVITY, sizeof(float));
 
-  unsigned int textureId = 1;
-  r2dCreateTexture("assets/image.png", &textureId);
+  // load our assets we need
+  unsigned int texture = loadTexture("assets/tiles/dirt_grass.png");
 
   // Create our player entity
   entity_t player = ecsCreateEntity();
-  sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = textureId};
+  sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = texture};
   transform_t transform = {.position = (vec3){PLAYER_START_X, PLAYER_START_Y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
   rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .force = (vec3){0, 0, 0}, .mass = 1.0f};
   collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};

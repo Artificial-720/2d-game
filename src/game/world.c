@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+#include "texture.h"
 #include "components.h"
 #include "ecs.h"
 #include "physics.h"
@@ -20,8 +21,10 @@ static int worldCorrdsToIndex(int x, int y) {
 }
 
 static void createTileEntity(tile_t *tile, int x, int y) {
+  unsigned int texture = getTexture("assets/tiles/dirt.png");
+
   entity_t box = ecsCreateEntity();
-  sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = 1}; // fix this texture id stuff
+  sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = texture};
   transform_t transform = {.position = (vec3){x, y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
   collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
   ecsAddComponent(box, SPRITE, (void*)&sprite);

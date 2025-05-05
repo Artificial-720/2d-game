@@ -10,7 +10,7 @@ void r2dTerminate();
 // Clears the buffer
 void r2dClear();
 
-int r2dCreateTexture(const char *filename, unsigned int *textureID);
+int r2dCreateTexture(int width, int height, unsigned char *data, unsigned int *textureID);
 
 void r2dDrawSprite(sprite_t sprite);
 

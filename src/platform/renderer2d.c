@@ -4,9 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "../core/stb_image.h"
-
 typedef struct {
   unsigned int program;
   unsigned int vao;
@@ -185,6 +182,7 @@ int r2dInit() {
 }
 
 void r2dTerminate() {
+  glDeleteTextures(renderer.texturesCount, renderer.textures);
   free(renderer.textures);
 }
 
@@ -193,7 +191,7 @@ void r2dClear() {
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-int r2dCreateTexture(const char *filename, unsigned int *textureID) {
+int r2dCreateTexture(int width, int height, unsigned char *data, unsigned int *textureID) {
   if (renderer.texturesCount >= renderer.maxTextures) {
     return 1;
   }
@@ -206,16 +204,8 @@ int r2dCreateTexture(const char *filename, unsigned int *textureID) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  stbi_set_flip_vertically_on_load(1);
-  int width, height, nrChannels;
-  unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 4);
-  if (data) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-  } else {
-    return 1;
-  }
-  stbi_image_free(data);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  glGenerateMipmap(GL_TEXTURE_2D);
 
   renderer.textures[renderer.texturesCount] = *textureID;
   renderer.texturesCount++;
