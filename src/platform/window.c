@@ -134,8 +134,17 @@ void pollInput(window_t *window, input_t *input) {
   input->keyStates[KEY_SPACE] = getKey(window, GLFW_KEY_SPACE);
 
   // mouse
-  glfwGetCursorPos(window, &input->mouseX, &input->mouseY);
-  input->mouseStates[MOUSE_BUTTON_LEFT] = getMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-  input->mouseStates[MOUSE_BUTTON_RIGHT] = getMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+  double mouseX, mouseY;
+  glfwGetCursorPos(window, &mouseX, &mouseY);
+  input->mouseX = mouseX;
+  input->mouseY = mouseY;
+  if ((mouseX >= 0 && mouseX <= input->windowWidth) &&
+    (mouseY >= 0 && mouseY <= input->windowHeight)) {
+    input->mouseStates[MOUSE_BUTTON_LEFT] = getMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    input->mouseStates[MOUSE_BUTTON_RIGHT] = getMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+  } else {
+    input->mouseStates[MOUSE_BUTTON_LEFT] = KEY_RELEASE;
+    input->mouseStates[MOUSE_BUTTON_RIGHT] = KEY_RELEASE;
+  }
 }
 
