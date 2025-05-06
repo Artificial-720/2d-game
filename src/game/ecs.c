@@ -23,7 +23,7 @@ int componentCount;
 
 int ecsInit() {
   entityCount = 0;
-  maxEntities = 1000;
+  maxEntities = 4000;
   entitiesMap = (entity_t*)malloc(maxEntities * sizeof(entity_t));
   signatures = (unsigned int*)malloc(maxEntities * sizeof(unsigned int));
   for (int i = 0; i < maxEntities; i++) {

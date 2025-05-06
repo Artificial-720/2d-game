@@ -10,7 +10,7 @@
 #include "../platform/sprite.h"
 
 #define PLAYER_START_X 10
-#define PLAYER_START_Y 10
+#define PLAYER_START_Y 100
 
 typedef struct {
   camera_t camera;
@@ -48,7 +48,10 @@ int gameInit() {
   gameState.player = player;
 
   // Create our world and load the area around the player
-  gameState.world = worldGenerate();
+  gameState.world = worldInit();
+  // generate our world
+  worldGenerate(&gameState.world);
+
   worldLoadTiles(&gameState.world, transform.position.x);
 
   // Setup Camera

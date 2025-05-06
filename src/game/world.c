@@ -41,21 +41,20 @@ static void removeTileEntity(tile_t *tile) {
   tile->loaded = 0;
 }
 
-world_t worldGenerate() {
+world_t worldInit() {
   world_t world = {
     .tiles = 0
   };
 
   world.tiles = (tile_t*)malloc(WORLD_TILE_COUNT * sizeof(tile_t));
 
+  // fill with empty to prevent crash
   tile_t empty = {.entityId = 0, .type = TILE_EMPTY, .loaded = 0};
-  tile_t full = {.entityId = 0, .type = TILE_GRASS, .loaded = 0};
   for (int i = 0; i < WORLD_TILE_COUNT; i++) {
     int x, y;
     indexToWorldCoords(i, &x, &y);
-    world.tiles[i] = (y < 2) ? full : empty;
+    world.tiles[i] = empty;
   }
-
 
   return world;
 }
@@ -102,4 +101,36 @@ void worldPlaceTile(world_t *world, int x, int y, enum tile_type type) {
   if (world->tiles[index].type == TILE_EMPTY) {
     world->tiles[index].type = type;
   }
+}
+
+#include <stdio.h>
+#include "../core/noise.h"
+void worldGenerate(world_t *world) {
+  printf("Generating world\n");
+  int surfaceLevel = 50;
+
+  // 1. flat ground
+  printf("Empty world\n");
+  tile_t empty = {.entityId = 0, .type = TILE_EMPTY, .loaded = 0};
+  tile_t dirt = {.entityId = 0, .type = TILE_GRASS, .loaded = 0};
+  for (int i = 0; i < WORLD_TILE_COUNT; i++) {
+    int x, y;
+    indexToWorldCoords(i, &x, &y);
+    world->tiles[i] = (y < surfaceLevel) ? dirt : empty;
+  }
+
+  float noiseScale = 0.1f;
+  int maxHill = 5; // offset from surface level
+  printf("Adding hills\n");
+
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    double height = perlin(x * noiseScale, surfaceLevel * noiseScale);
+    int offset = maxHill * height;
+
+    for (int y = 0; y < WORLD_HEIGHT; y++) {
+      int index = worldCorrdsToIndex(x, y);
+      world->tiles[index] = (y < (surfaceLevel + offset)) ? dirt : empty;
+    }
+  }
+
 }
