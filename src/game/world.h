@@ -9,7 +9,7 @@
 #define TILE_LOAD_DISTANCE 20
 
 enum tile_type {
-  TILE_EMPTY, TILE_GRASS
+  TILE_EMPTY, TILE_DIRT, TILE_GRASS
 };
 
 typedef struct {

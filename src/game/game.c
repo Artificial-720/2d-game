@@ -31,7 +31,7 @@ int gameInit() {
   ecsRegisterComponent(GRAVITY, sizeof(float));
 
   // load our assets we need
-  unsigned int texture = loadTexture("assets/tiles/dirt_grass.png");
+  unsigned int texture = loadTexture("assets/tiles/mushroom_red.png");
 
   // Create our player entity
   entity_t player = ecsCreateEntity();

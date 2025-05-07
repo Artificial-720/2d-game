@@ -22,6 +22,9 @@ static int worldCorrdsToIndex(int x, int y) {
 
 static void createTileEntity(tile_t *tile, int x, int y) {
   unsigned int texture = getTexture("assets/tiles/dirt.png");
+  if (tile->type == TILE_GRASS) {
+    texture = getTexture("assets/tiles/dirt_grass.png");
+  }
 
   entity_t box = ecsCreateEntity();
   sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = texture};
@@ -112,7 +115,8 @@ void worldGenerate(world_t *world) {
   // 1. flat ground
   printf("Empty world\n");
   tile_t empty = {.entityId = 0, .type = TILE_EMPTY, .loaded = 0};
-  tile_t dirt = {.entityId = 0, .type = TILE_GRASS, .loaded = 0};
+  tile_t dirt = {.entityId = 0, .type = TILE_DIRT, .loaded = 0};
+  tile_t grass = {.entityId = 0, .type = TILE_GRASS, .loaded = 0};
   for (int i = 0; i < WORLD_TILE_COUNT; i++) {
     int x, y;
     indexToWorldCoords(i, &x, &y);
@@ -129,7 +133,14 @@ void worldGenerate(world_t *world) {
 
     for (int y = 0; y < WORLD_HEIGHT; y++) {
       int index = worldCorrdsToIndex(x, y);
-      world->tiles[index] = (y < (surfaceLevel + offset)) ? dirt : empty;
+      int surface = surfaceLevel + offset;
+      if (y == surface) {
+        world->tiles[index] = grass;
+      } else if (y < surface) {
+        world->tiles[index] = dirt;
+      } else {
+        world->tiles[index] = empty;
+      }
     }
   }
 
