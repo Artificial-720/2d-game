@@ -39,16 +39,14 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
     velocity.y = 4.0f;
   } else if (input->keyStates[KEY_S] == KEY_HELD) {
     velocity.y = -4.0f;
-  } else {
-    velocity.y = 0.0f;
   }
   setVelocity(playerBody->body, velocity);
 
-  // if (input->keyStates[KEY_SPACE] == KEY_HELD) {
-  //   if (velocity.y < 0.1f) {
-  //     applyForce(playerBody->body, (vec2){0.0f, 1200.0f});
-  //   }
-  // }
+  if (input->keyStates[KEY_SPACE] == KEY_HELD) {
+    if (velocity.y < 0.1f) {
+      applyForce(playerBody->body, (vec2){0.0f, 1200.0f});
+    }
+  }
 
 
 

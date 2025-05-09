@@ -32,7 +32,7 @@ static body_t bodies[100];
 static staticBody_t staticBodies[100];
 static int bodyCount = 0;
 static int staticCount = 0;
-static float gravity = 0.0f;
+static float gravity = 9.81f;
 
 void physicsInit() {
 }
@@ -114,8 +114,8 @@ int quadQuadIntersection(vec2 posA, vec2 sizeA, vec2 posB, vec2 sizeB) {
 void physicsStep(double dt) {
   printf("running physics step\n");
   for (int i = 0; i < bodyCount; i++) {
-    // printf("pos: %f %f dt: %f\n", bodies[i].pos.x, bodies[i].pos.y, dt);
-    // printf("vel: %f %f\n", bodies[i].rb.velocity.x, bodies[i].rb.velocity.y);
+    printf("pos: %f %f dt: %f\n", bodies[i].pos.x, bodies[i].pos.y, dt);
+    printf("vel: %f %f\n", bodies[i].rb.velocity.x, bodies[i].rb.velocity.y);
     // printf("applying forces\n");
     bodies[i].rb.force.y += -(gravity);
     // printf("updating positions\n");
@@ -182,12 +182,18 @@ void physicsStep(double dt) {
         }
       }
 
-
       // update position
       bodies[i].pos.y += dir.y * pen;
       bodies[i].pos.x += dir.x * pen;
-      bodies[i].rb.velocity.y *= dir.y;
-      bodies[i].rb.velocity.x *= dir.x;
+      printf("dir: %f %f\n", dir.x, dir.y);
+      // zero out velocity that has dir
+      if (dir.x) {
+        bodies[i].rb.velocity.x = 0;
+      }
+      if (dir.y) {
+        bodies[i].rb.velocity.y = 0;
+      }
+
 
 
 
@@ -221,5 +227,6 @@ void physicsStep(double dt) {
     }
     // printf("clear force\n");
     bodies[i].rb.force.y = 0;
+    bodies[i].rb.force.x = 0;
   }
 }
