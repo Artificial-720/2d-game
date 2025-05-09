@@ -28,11 +28,13 @@ static void createTileEntity(tile_t *tile, int x, int y) {
 
   entity_t box = ecsCreateEntity();
   sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = texture};
-  transform_t transform = {.position = (vec3){x, y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
-  collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
+  // transform_t transform = {.position = (vec3){x, y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
+  // collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
   ecsAddComponent(box, SPRITE, (void*)&sprite);
-  ecsAddComponent(box, TRANSFORM, (void*)&transform);
-  ecsAddComponent(box, COLLIDER, (void*)&collider);
+  // ecsAddComponent(box, TRANSFORM, (void*)&transform);
+  // ecsAddComponent(box, COLLIDER, (void*)&collider);
+  (void)x;
+  (void)y;
 
   tile->entityId = box;
   tile->loaded = 1;

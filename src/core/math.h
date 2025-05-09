@@ -43,13 +43,19 @@ void printMat4(mat4 mat);
 float radians(float degrees);
 float clamp(float value, float min, float max);
 
-vec3 normalize(vec3 v);
-vec3 vec3Add(vec3 a, vec3 b);
-vec3 vec3Sub(vec3 a, vec3 b);
-vec3 vec3Scaler(vec3 v, float scaler);
 float distance(vec3 a, vec3 b);
 mat4 mat4Scaler(mat4 a, float scaler);
 
 vec4 mat4vec4multiply(mat4 a, vec4 b);
+
+// Vector 2 math
+vec2 vec2Add(vec2 a, vec2 b);
+vec2 vec2Sub(vec2 a, vec2 b);
+
+// Vector 3 math
+vec3 normalize(vec3 v);
+vec3 vec3Add(vec3 a, vec3 b);
+vec3 vec3Sub(vec3 a, vec3 b);
+vec3 vec3Scaler(vec3 v, float scaler);
 
 #endif

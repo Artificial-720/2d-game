@@ -20,31 +20,29 @@ typedef struct {
 
 static gameState_t gameState;
 
+
+
 int gameInit() {
   ecsInit();
 
   // register our ecs components
   ecsRegisterComponent(SPRITE, sizeof(sprite_t));
-  ecsRegisterComponent(RIGIDBODY, sizeof(rigidbody_t));
   ecsRegisterComponent(TRANSFORM, sizeof(transform_t));
-  ecsRegisterComponent(COLLIDER, sizeof(collider_t));
-  ecsRegisterComponent(GRAVITY, sizeof(float));
+  ecsRegisterComponent(PHYSICS, sizeof(physics_t));
 
   // load our assets we need
-  unsigned int texture = loadTexture("assets/tiles/mushroom_red.png");
+  unsigned int texture = loadTexture("assets/image.png");
 
   // Create our player entity
   entity_t player = ecsCreateEntity();
-  sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = texture};
-  transform_t transform = {.position = (vec3){PLAYER_START_X, PLAYER_START_Y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
-  rigidbody_t rb = {.velocity = (vec3){0, 0, 0}, .force = (vec3){0, 0, 0}, .mass = 1.0f};
-  collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
-  float gravity = 9.81f;
+  sprite_t sprite = createSprite(10, 10, 1, 1, 0, texture);
+  transform_t transform = {.pos = (vec2){10, 10}};
+  physics_t p = {.body = 0, .isStatic = 0};
+  p.body = createBody((vec2){10, 10}, (vec2){1.0f, 1.0f});
+
   ecsAddComponent(player, SPRITE, (void*)&sprite);
-  ecsAddComponent(player, RIGIDBODY, (void*)&rb);
   ecsAddComponent(player, TRANSFORM, (void*)&transform);
-  ecsAddComponent(player, GRAVITY, (void*)&gravity);
-  ecsAddComponent(player, COLLIDER, (void*)&collider);
+  ecsAddComponent(player, PHYSICS, (void*)&p);
   gameState.player = player;
 
   // Create our world and load the area around the player
@@ -52,7 +50,37 @@ int gameInit() {
   // generate our world
   worldGenerate(&gameState.world);
 
-  worldLoadTiles(&gameState.world, transform.position.x);
+  // worldLoadTiles(&gameState.world, transform.position.x);
+
+
+  // create a test world
+  unsigned int floorTexture = loadTexture("assets/image.png");
+  entity_t floor = ecsCreateEntity();
+  sprite_t floorSprite = {.x = 1, .y = 1, .width = 20, .height = 1, .texture = floorTexture};
+  transform_t floorTransform = {.pos = (vec2){1, 1}};
+  physics_t floorPhysics = {.body = 0, .isStatic = 1};
+  p.body = createStaticBody((vec2){1, 1}, (vec2){20.0f, 1.0f});
+  ecsAddComponent(floor, SPRITE, (void*)&floorSprite);
+  ecsAddComponent(floor, TRANSFORM, (void*)&floorTransform);
+  ecsAddComponent(floor, PHYSICS, (void*)&floorPhysics);
+
+  entity_t wall = ecsCreateEntity();
+  sprite_t wallSprite = {.x = 21, .y = 11, .width = 1, .height = 10, .texture = floorTexture};
+  transform_t wallTransform = {.pos = (vec2){21, 11}};
+  physics_t wallPhysics = {.body = 0, .isStatic = 1};
+  p.body = createStaticBody((vec2){21, 11}, (vec2){1.0f, 10.0f});
+  ecsAddComponent(wall, SPRITE, (void*)&wallSprite);
+  ecsAddComponent(wall, PHYSICS, (void*)&wallPhysics);
+  ecsAddComponent(wall, TRANSFORM, (void*)&wallTransform);
+
+  entity_t box = ecsCreateEntity();
+  sprite_t boxSprite = {.x = 5, .y = 4, .width = 2, .height = 2, .texture = floorTexture};
+  transform_t boxTransform = {.pos = (vec2){5, 4}};
+  physics_t boxPhysics = {.body = 0, .isStatic = 1};
+  p.body = createStaticBody((vec2){5, 4}, (vec2){2.0f, 2.0f});
+  ecsAddComponent(box, SPRITE, (void*)&boxSprite);
+  ecsAddComponent(box, PHYSICS, (void*)&boxPhysics);
+  ecsAddComponent(box, TRANSFORM, (void*)&boxTransform);
 
   // Setup Camera
   gameState.camera = cameraInit();
@@ -61,7 +89,7 @@ int gameInit() {
 }
 
 int gameFrame(double dt, input_t *input, output_t *output) {
-  transform_t *tf = (transform_t*)ecsGetComponent(gameState.player, TRANSFORM);
+  // transform_t *tf = (transform_t*)ecsGetComponent(gameState.player, TRANSFORM);
 
   // full screen toggle
   if (input->keyStates[KEY_F] == KEY_PRESS) {
@@ -79,8 +107,8 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   spriteSystem();
 
   // load world
-  worldLoadTiles(&gameState.world, tf->position.x);
-  worldUnloadTiles(&gameState.world, tf->position.x);
+  // worldLoadTiles(&gameState.world, tf->position.x);
+  // worldUnloadTiles(&gameState.world, tf->position.x);
 
   return 0;
 }

@@ -3,37 +3,23 @@
 
 #include "../core/math.h"
 
-typedef struct {
-  vec3 velocity;
-  vec3 force;
-  float mass;
-} rigidbody_t;
+void physicsInit();
+void physicsCleanup();
+void physicsStep(double dt);
 
-typedef struct {
-  vec3 position;
-  vec3 rotation;
-  vec3 scale;
-} transform_t;
+// has a transform and rigid-body
+unsigned int createBody(vec2 pos, vec2 size); // with a collider
+unsigned int createBodyNoCollider(vec2 pos); // no collider just moves and ignores everything
+// has a transform and collider
+unsigned int createStaticBody(vec2 pos, vec2 size);
 
-typedef struct {
-  vec3 offset; // offset from transform position
-  float radius;
-} collider_t;
+void removeBody(unsigned int id);
+void removeStaticbody(unsigned int id);
 
-
-typedef struct {
-  vec3 a; // point of A into B
-  vec3 b; // point of B into A
-  vec3 normal; // b - a normalized
-  float depth; // length of b - a
-  int hasCollision;
-} collision_t;
-
-
-// does a physics step
-void step(double deltatime);
-
-collision_t collisionDetection(collider_t *ac, transform_t *at, collider_t *bc, transform_t *bt);
-
+// only works on not static bodies
+void applyForce(unsigned int id, vec2 force);
+vec2 getPosition(unsigned int id);
+vec2 getVelocity(unsigned int id);
+void setVelocity(unsigned int id, vec2 v);
 
 #endif

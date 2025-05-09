@@ -274,3 +274,10 @@ vec4 mat4vec4multiply(mat4 a, vec4 v) {
 
   return result;
 }
+
+vec2 vec2Add(vec2 a, vec2 b) {
+  return (vec2){a.x + b.x, a.y + b.y};
+}
+vec2 vec2Sub(vec2 a, vec2 b) {
+  return (vec2){a.x - b.x, a.y - b.y};
+}

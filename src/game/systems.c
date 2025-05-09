@@ -1,125 +1,63 @@
 #include "systems.h"
 
+#include "components.h"
+#include "../platform/sprite.h"
+#include "../platform/renderer2d.h"
 #include "ecs.h"
 #include "physics.h"
-#include "components.h"
-#include "../platform/renderer2d.h"
-#include "world.h"
 
 #include <stdlib.h>
 
-static void physicsStep(double dt, entity_t entity) {
-  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(entity, RIGIDBODY);
-  transform_t *tf = (transform_t*)ecsGetComponent(entity, TRANSFORM);
-
-  // apply forces to object in this case just gravity
-  if (ecsHasComponent(entity, GRAVITY)) {
-    float *g = (float*)ecsGetComponent(entity, GRAVITY);
-    rb->force.y += rb->mass * -(*g);
-  }
-
-  // collision detection
-  collision_t collision;
-  if (ecsHasComponent(entity, COLLIDER)) {
-    collider_t *c = (collider_t*)ecsGetComponent(entity, COLLIDER);
-
-    int count = 0;
-    unsigned long sig = ecsGetSignature(TRANSFORM);
-    sig |= ecsGetSignature(COLLIDER);
-    entity_t *others = ecsQuery(sig, &count);
-    for (int i = 0; i < count; i++) {
-      entity_t other = others[i];
-      if (other == entity) continue;
-      collider_t *otherC = (collider_t*)ecsGetComponent(other, COLLIDER);
-      transform_t *otherT = (transform_t*)ecsGetComponent(other, TRANSFORM);
-      // check for collision between two colliders
-      collision = collisionDetection(c, tf, otherC, otherT);
-      if (collision.hasCollision) {
-        break; // TODO handle multiple collisions
-      }
-    }
-    free(others);
-  }
-
-  // calculate new position
-  rb->velocity.y += rb->force.y / rb->mass * dt;
-  rb->velocity.x += rb->force.x / rb->mass * dt;
-  tf->position.y += rb->velocity.y * dt;
-  tf->position.x += rb->velocity.x * dt;
-
-  // resolve collisions
-  if (collision.hasCollision) {
-    rb->velocity = (vec3){0, 0, 0};
-    // move position
-    collision.a.x = 0;
-    collision.a.y = 0.5 - collision.a.y;
-    tf->position = vec3Add(tf->position, collision.a);
-  }
-
-  // clear force
-  rb->force.y = 0.0f;
-}
-
 void spriteSystem() {
   int count = 0;
-  unsigned long sig = ecsGetSignature(TRANSFORM);
-  sig |= ecsGetSignature(SPRITE);
+  unsigned long sig = ecsGetSignature(SPRITE) | ecsGetSignature(TRANSFORM);
   entity_t *entities = ecsQuery(sig, &count);
 
   for (int i = 0; i < count; i++) {
     entity_t entity = entities[i];
-    transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
     sprite_t *sprite = (sprite_t*)ecsGetComponent(entity, SPRITE);
-    sprite->x = transform->position.x;
-    sprite->y = transform->position.y;
+    transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+    sprite->x = transform->pos.x;
+    sprite->y = transform->pos.y;
     r2dDrawSprite(*sprite);
   }
 
   free(entities);
 }
 
-void physicsSystem(double dt) {
-  int count = 0;
-  unsigned long sig = ecsGetSignature(TRANSFORM);
-  sig |= ecsGetSignature(RIGIDBODY);
-  entity_t *entities = ecsQuery(sig, &count);
-
-  for (int i = 0; i < count; i++) {
-    entity_t entity = entities[i];
-    physicsStep(dt, entity);
-  }
-
-  free(entities);
-}
-
 void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *world) {
-  // move player
-  rigidbody_t *rb = (rigidbody_t*)ecsGetComponent(player, RIGIDBODY);
+  physics_t *playerBody = (physics_t*)ecsGetComponent(player, PHYSICS);
+  vec2 velocity = getVelocity(playerBody->body);
   if (input->keyStates[KEY_A] == KEY_HELD) {
-    rb->velocity.x = -4.0f;
+    velocity.x = -4.0f;
   } else if (input->keyStates[KEY_D] == KEY_HELD) {
-    rb->velocity.x = 4.0f;
+    velocity.x = 4.0f;
+  } else {
+    velocity.x = 0.0f;
   }
-  if (input->keyStates[KEY_SPACE] == KEY_HELD) {
-    if (rb->velocity.y < 0.01) {
-      rb->force.y = 500;
-    }
+  if (input->keyStates[KEY_W] == KEY_HELD) {
+    velocity.y = 4.0f;
+  } else if (input->keyStates[KEY_S] == KEY_HELD) {
+    velocity.y = -4.0f;
+  } else {
+    velocity.y = 0.0f;
   }
+  setVelocity(playerBody->body, velocity);
 
-  // click input
-  if (input->mouseStates[MOUSE_BUTTON_LEFT] == KEY_PRESS) {
-    vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
-    int tileX, tileY;
-    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
-    worldPlaceTile(world, tileX, tileY, TILE_GRASS);
-  }
-  if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
-    vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
-    int tileX, tileY;
-    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
-    worldPlaceTile(world, tileX, tileY, TILE_EMPTY);
-  }
+  // if (input->keyStates[KEY_SPACE] == KEY_HELD) {
+  //   if (velocity.y < 0.1f) {
+  //     applyForce(playerBody->body, (vec2){0.0f, 1200.0f});
+  //   }
+  // }
 
+
+
+
+
+  (void)player;
+  (void)input;
+  (void)camera;
+  (void)world;
 }
 
 void cameraSystem(camera_t *camera, entity_t player, input_t *input) {
@@ -133,7 +71,24 @@ void cameraSystem(camera_t *camera, entity_t player, input_t *input) {
     -1, 1
   );
   transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
-  cameraUpdatePosition(camera, tf->position.x, tf->position.y);
+  cameraUpdatePosition(camera, tf->pos.x, tf->pos.y);
   r2dSetView(camera->view);
   r2dSetProjection(camera->projection);
+}
+
+
+void physicsSystem(double dt) {
+  physicsStep(dt);
+  // need to copy transforms out of physics
+  int count = 0;
+  unsigned long sig = ecsGetSignature(TRANSFORM) | ecsGetSignature(PHYSICS);
+  entity_t *entities = ecsQuery(sig, &count);
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+    physics_t *physics = (physics_t*)ecsGetComponent(entity, PHYSICS);
+    if (physics->isStatic) continue;
+    transform->pos = getPosition(physics->body);
+  }
+  free(entities);
 }
