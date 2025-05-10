@@ -1,5 +1,7 @@
 #include "world.h"
 
+#include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 
 #include "texture.h"
@@ -7,6 +9,7 @@
 #include "ecs.h"
 #include "physics.h"
 #include "../platform/sprite.h"
+#include "../core/noise.h"
 
 static int withinLoadDistance(int x, int cameraX) {
     return (x  > cameraX - TILE_LOAD_DISTANCE && x < cameraX + TILE_LOAD_DISTANCE);
@@ -102,6 +105,8 @@ void worldTranslateToGrid(float x, float y, int *tileX, int *tileY) {
 }
 
 void worldPlaceTile(world_t *world, int x, int y, enum tile_type type) {
+  assert(x >= 0 && x < WORLD_WIDTH);
+  assert(y >= 0 && y < WORLD_HEIGHT);
   int index = worldCorrdsToIndex(x, y);
 
   if (world->tiles[index].type == TILE_EMPTY) {
@@ -109,42 +114,49 @@ void worldPlaceTile(world_t *world, int x, int y, enum tile_type type) {
   }
 }
 
-#include <stdio.h>
-#include "../core/noise.h"
+int worldPointInWorld(int x, int y) {
+  if (x >= 0 && x < WORLD_WIDTH &&
+      y >= 0 && y < WORLD_HEIGHT) {
+    return 1;
+  }
+  return 0;
+}
+
 void worldGenerate(world_t *world) {
   printf("Generating world\n");
-  int surfaceLevel = 50;
+  // int surfaceLevel = 50;
+  int surfaceLevel = 5;
 
   // 1. flat ground
   printf("Empty world\n");
   tile_t empty = {.entityId = 0, .type = TILE_EMPTY, .loaded = 0};
   tile_t dirt = {.entityId = 0, .type = TILE_DIRT, .loaded = 0};
-  tile_t grass = {.entityId = 0, .type = TILE_GRASS, .loaded = 0};
+  // tile_t grass = {.entityId = 0, .type = TILE_GRASS, .loaded = 0};
   for (int i = 0; i < WORLD_TILE_COUNT; i++) {
     int x, y;
     indexToWorldCoords(i, &x, &y);
     world->tiles[i] = (y < surfaceLevel) ? dirt : empty;
   }
 
-  float noiseScale = 0.1f;
-  int maxHill = 5; // offset from surface level
-  printf("Adding hills\n");
+  // float noiseScale = 0.1f;
+  // int maxHill = 5; // offset from surface level
+  // printf("Adding hills\n");
 
-  for (int x = 0; x < WORLD_WIDTH; x++) {
-    double height = perlin(x * noiseScale, surfaceLevel * noiseScale);
-    int offset = maxHill * height;
+  // for (int x = 0; x < WORLD_WIDTH; x++) {
+  //   double height = perlin(x * noiseScale, surfaceLevel * noiseScale);
+  //   int offset = maxHill * height;
 
-    for (int y = 0; y < WORLD_HEIGHT; y++) {
-      int index = worldCorrdsToIndex(x, y);
-      int surface = surfaceLevel + offset;
-      if (y == surface) {
-        world->tiles[index] = grass;
-      } else if (y < surface) {
-        world->tiles[index] = dirt;
-      } else {
-        world->tiles[index] = empty;
-      }
-    }
-  }
+  //   for (int y = 0; y < WORLD_HEIGHT; y++) {
+  //     int index = worldCorrdsToIndex(x, y);
+  //     int surface = surfaceLevel + offset;
+  //     if (y == surface) {
+  //       world->tiles[index] = grass;
+  //     } else if (y < surface) {
+  //       world->tiles[index] = dirt;
+  //     } else {
+  //       world->tiles[index] = empty;
+  //     }
+  //   }
+  // }
 
 }

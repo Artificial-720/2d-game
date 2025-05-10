@@ -81,14 +81,18 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
     }
   }
 
+  // click input
+  if (input->mouseStates[MOUSE_BUTTON_LEFT] == KEY_PRESS) {
+    vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
+    int tileX, tileY;
+    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
+    if (worldPointInWorld(tileX, tileY)) {
+      worldPlaceTile(world, tileX, tileY, TILE_GRASS);
+    }
+  }
 
 
 
-
-  (void)player;
-  (void)input;
-  (void)camera;
-  (void)world;
 }
 
 void cameraSystem(camera_t *camera, entity_t player, input_t *input) {

@@ -39,8 +39,7 @@ int gameInit() {
   sprite_t sprite = createSprite(10, 10, 1, 1, 0, texture);
   transform_t transform = {.pos = (vec2){10, 10}};
   physics_t p = {.body = 0, .isStatic = 0};
-  p.body = createBody((vec2){10, 60}, (vec2){1.0f, 1.0f});
-
+  p.body = createBody((vec2){5, 15}, (vec2){1.0f, 1.0f});
   ecsAddComponent(player, SPRITE, (void*)&sprite);
   ecsAddComponent(player, TRANSFORM, (void*)&transform);
   ecsAddComponent(player, PHYSICS, (void*)&p);

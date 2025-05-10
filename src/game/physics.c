@@ -68,6 +68,7 @@ unsigned int createStaticBody(vec2 pos, vec2 size) {
 // }
 
 void removeStaticbody(unsigned int id) {
+  // this breaks references saved outside
   staticCount--;
   for (int i = id; i < staticCount; i++) {
     staticBodies[i] = staticBodies[i + 1];
