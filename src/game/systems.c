@@ -1,12 +1,45 @@
 #include "systems.h"
 
+#include "camera.h"
 #include "components.h"
 #include "../platform/sprite.h"
 #include "../platform/renderer2d.h"
 #include "ecs.h"
 #include "physics.h"
 
+#include <stdio.h>
 #include <stdlib.h>
+
+void uiSystem(camera_t *camera, input_t * input) {
+  float h = input->windowHeight;
+  float w = input->windowWidth;
+  mat4 proj = orthographic(0, w, h, 0, 0, 1);
+  mat4 view = mat4Init(1.0f);
+  r2dSetView(view);
+  r2dSetProjection(proj);
+
+
+  int count = 0;
+  unsigned long sig = ecsGetSignature(UI) | ecsGetSignature(SPRITE);
+  entity_t *entities = ecsQuery(sig, &count);
+
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    ui_t *ui = (ui_t*)ecsGetComponent(entity, UI);
+    sprite_t *sprite = (sprite_t*)ecsGetComponent(entity, SPRITE);
+
+    sprite->x = ui->pos.x;
+    sprite->y = ui->pos.y;
+    r2dDrawSprite(*sprite);
+  }
+
+  free(entities);
+
+
+  // set back to camera for world
+  r2dSetView(camera->view);
+  r2dSetProjection(camera->projection);
+}
 
 void spriteSystem() {
   int count = 0;
@@ -44,7 +77,7 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
 
   if (input->keyStates[KEY_SPACE] == KEY_HELD) {
     if (velocity.y < 0.1f) {
-      applyForce(playerBody->body, (vec2){0.0f, 1200.0f});
+      applyForce(playerBody->body, (vec2){0.0f, 800.0f});
     }
   }
 

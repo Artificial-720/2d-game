@@ -17,4 +17,10 @@ void r2dDrawSprite(sprite_t sprite);
 void r2dSetView(mat4 a);
 void r2dSetProjection(mat4 a);
 
+// the code i have seen is renderer.render(camera, scene);
+// something like that so ever time i am drawing stuff its from some camera
+//
+// i think i need to have another camera that will hold the screen space
+// so i can render ui to that camera, then i dont have to deal with world space
+// things can be draw to screen directly
 #endif

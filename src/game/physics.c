@@ -29,7 +29,7 @@ typedef struct {
 } collision_t;
 
 static body_t bodies[100];
-static staticBody_t staticBodies[100];
+static staticBody_t staticBodies[10000];
 static int bodyCount = 0;
 static int staticCount = 0;
 static float gravity = 9.81f;
@@ -67,8 +67,12 @@ unsigned int createStaticBody(vec2 pos, vec2 size) {
 // void removeBody(unsigned int id) {
 // }
 
-// void removeStaticbody(unsigned int id) {
-// }
+void removeStaticbody(unsigned int id) {
+  staticCount--;
+  for (int i = id; i < staticCount; i++) {
+    staticBodies[i] = staticBodies[i + 1];
+  }
+}
 
 // void applyForce(unsigned int id, vec2 force) {
 // }
@@ -112,10 +116,10 @@ int quadQuadIntersection(vec2 posA, vec2 sizeA, vec2 posB, vec2 sizeB) {
 }
 
 void physicsStep(double dt) {
-  printf("running physics step\n");
+  // printf("running physics step\n");
   for (int i = 0; i < bodyCount; i++) {
-    printf("pos: %f %f dt: %f\n", bodies[i].pos.x, bodies[i].pos.y, dt);
-    printf("vel: %f %f\n", bodies[i].rb.velocity.x, bodies[i].rb.velocity.y);
+    // printf("pos: %f %f dt: %f\n", bodies[i].pos.x, bodies[i].pos.y, dt);
+    // printf("vel: %f %f\n", bodies[i].rb.velocity.x, bodies[i].rb.velocity.y);
     // printf("applying forces\n");
     bodies[i].rb.force.y += -(gravity);
     // printf("updating positions\n");
@@ -135,9 +139,9 @@ void physicsStep(double dt) {
     #define MAX_COLLISIONS 10
     int collisionCount = 0;
     collision_t collisions[MAX_COLLISIONS] = {0};
-    printf("player pos: %f %f\n", bodies[i].pos.x, bodies[i].pos.y);
+    // printf("player pos: %f %f\n", bodies[i].pos.x, bodies[i].pos.y);
     for (int j = 0; j < staticCount; j++) {
-      printf("static pos: %f %f, size: %f %f\n", staticBodies[j].pos.x,staticBodies[j].pos.y,staticBodies[j].size.x,staticBodies[j].size.y);
+      // printf("static pos: %f %f, size: %f %f\n", staticBodies[j].pos.x,staticBodies[j].pos.y,staticBodies[j].size.x,staticBodies[j].size.y);
       if (quadQuadIntersection(bodies[i].pos, bodies[i].size, staticBodies[j].pos, staticBodies[j].size)) {
         collision_t c = {
           .body = staticBodies[j]
@@ -185,7 +189,7 @@ void physicsStep(double dt) {
       // update position
       bodies[i].pos.y += dir.y * pen;
       bodies[i].pos.x += dir.x * pen;
-      printf("dir: %f %f\n", dir.x, dir.y);
+      // printf("dir: %f %f\n", dir.x, dir.y);
       // zero out velocity that has dir
       if (dir.x) {
         bodies[i].rb.velocity.x = 0;

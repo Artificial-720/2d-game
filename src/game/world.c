@@ -28,19 +28,20 @@ static void createTileEntity(tile_t *tile, int x, int y) {
 
   entity_t box = ecsCreateEntity();
   sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = texture};
-  // transform_t transform = {.position = (vec3){x, y, 0}, .scale = (vec3){1.0f, 1.0f, 1.0f}};
-  // collider_t collider = {.offset = (vec3){0, 0, 0}, .radius = 0.5};
+  transform_t transform = {.pos = (vec2){x, y}};
+  physics_t p = {.body = 0, .isStatic = 1};
+  p.body = createStaticBody((vec2){x, y}, (vec2){1.0f, 1.0f});
   ecsAddComponent(box, SPRITE, (void*)&sprite);
-  // ecsAddComponent(box, TRANSFORM, (void*)&transform);
-  // ecsAddComponent(box, COLLIDER, (void*)&collider);
-  (void)x;
-  (void)y;
+  ecsAddComponent(box, TRANSFORM, (void*)&transform);
+  ecsAddComponent(box, PHYSICS, (void*)&p);
 
   tile->entityId = box;
   tile->loaded = 1;
 }
 
 static void removeTileEntity(tile_t *tile) {
+  physics_t *p = (physics_t*)ecsGetComponent(tile->entityId, PHYSICS);
+  removeStaticbody(p->body);
   ecsDeleteEntity(tile->entityId);
   tile->entityId = 0;
   tile->loaded = 0;
