@@ -173,7 +173,7 @@ void physicsStep(double dt) {
       }
     }
     // printf("resolving collisions\n");
-    printf("collision Count %d\n", collisionCount);
+    // printf("collision Count %d\n", collisionCount);
     for (int j = 0; j < collisionCount; j++) {
       staticBody_t b = collisions[j].body;
       // find best axis to resolve collision

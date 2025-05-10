@@ -36,7 +36,7 @@ int main() {
     double deltatime = now - previousTime;
     previousTime = now;
 
-    printf("FPS: %f\n", 1.0f / deltatime);
+    // printf("FPS: %f\n", 1.0f / deltatime);
 
     pollInput(window, &platformInput);
     windowUpdateViewport(window, &screenWidth, &screenHeight);

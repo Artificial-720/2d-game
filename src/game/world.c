@@ -12,6 +12,10 @@
 #include "../platform/sprite.h"
 #include "../core/noise.h"
 
+#define TICK_RATE 0.01666f // 60 ticks per sec
+
+static double accumulated = 0.0f;
+
 static int withinLoadDistance(int x, int cameraX) {
     return (x  > cameraX - TILE_LOAD_DISTANCE && x < cameraX + TILE_LOAD_DISTANCE);
 }
@@ -21,6 +25,8 @@ static void indexToWorldCoords(int index, int *x, int *y) {
   *y = index / WORLD_WIDTH;
 }
 static int worldCoordsToIndex(int x, int y) {
+  assert(x >= 0 && x < WORLD_WIDTH);
+  assert(y >= 0 && y < WORLD_HEIGHT);
   return x + WORLD_WIDTH * y;
 }
 
@@ -49,6 +55,14 @@ static void removeTileEntity(tile_t *tile) {
   ecsDeleteEntity(tile->entityId);
   tile->entityId = 0;
   tile->loaded = 0;
+}
+
+static void replaceTile(world_t *world, int index, enum tile_type type) {
+  assert(index >= 0 && index < WORLD_TILE_COUNT);
+
+  world->tiles[index].type = type;
+  // reload the tile ideally could just swap out the texture
+  removeTileEntity(&world->tiles[index]);
 }
 
 world_t worldInit() {
@@ -137,6 +151,34 @@ int worldPointInWorld(int x, int y) {
     return 1;
   }
   return 0;
+}
+
+
+void worldRandomTick(world_t *world, double dt) {
+  accumulated += dt;
+  if (accumulated < TICK_RATE) return;
+
+  accumulated -= TICK_RATE;
+  int index = rand() / (RAND_MAX / WORLD_TILE_COUNT);
+  int x, y;
+  indexToWorldCoords(index, &x, &y);
+
+  printf("random tick %d %d\n", x, y);
+  // grow grass
+  if (world->tiles[index].type == TILE_GRASS) {
+    if (x + 1 < WORLD_WIDTH) {
+      int other = worldCoordsToIndex(x + 1, y);
+      if (world->tiles[other].type == TILE_DIRT) {
+        replaceTile(world, other, TILE_GRASS);
+      }
+    }
+    if ((x - 1) >= 0) {
+      int other = worldCoordsToIndex(x - 1, y);
+      if (world->tiles[other].type == TILE_DIRT) {
+        replaceTile(world, other, TILE_GRASS);
+      }
+    }
+  }
 }
 
 void worldGenerate(world_t *world) {

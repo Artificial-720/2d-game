@@ -132,6 +132,9 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   worldLoadTiles(&gameState.world, tf->pos.x);
   worldUnloadTiles(&gameState.world, tf->pos.x);
 
+  // random tick
+  worldRandomTick(&gameState.world, dt);
+
   return 0;
 }
 

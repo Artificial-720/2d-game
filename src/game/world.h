@@ -5,7 +5,7 @@
 // #define WORLD_HEIGHT 2400
 #define WORLD_WIDTH 15
 #define WORLD_HEIGHT 30
-#define WORLD_TILE_COUNT WORLD_HEIGHT * WORLD_WIDTH
+#define WORLD_TILE_COUNT (WORLD_HEIGHT * WORLD_WIDTH)
 #define TILE_LOAD_DISTANCE 20
 
 enum tile_type {
@@ -31,6 +31,7 @@ void worldUnloadTiles(world_t *world, int cameraX);
 void worldPlaceTile(world_t *world, int x, int y, enum tile_type type);
 void worldBreakTile(world_t *world, int x, int y, enum tile_type *type);
 void worldTranslateToGrid(float x, float y, int *tileX, int *tileY);
+void worldRandomTick(world_t *world, double dt);
 
 int worldPointInWorld(int x, int y);
 
