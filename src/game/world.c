@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <strings.h>
 
 #include "texture.h"
 #include "components.h"
@@ -19,7 +20,7 @@ static void indexToWorldCoords(int index, int *x, int *y) {
   *x = index % WORLD_WIDTH;
   *y = index / WORLD_WIDTH;
 }
-static int worldCorrdsToIndex(int x, int y) {
+static int worldCoordsToIndex(int x, int y) {
   return x + WORLD_WIDTH * y;
 }
 
@@ -107,10 +108,26 @@ void worldTranslateToGrid(float x, float y, int *tileX, int *tileY) {
 void worldPlaceTile(world_t *world, int x, int y, enum tile_type type) {
   assert(x >= 0 && x < WORLD_WIDTH);
   assert(y >= 0 && y < WORLD_HEIGHT);
-  int index = worldCorrdsToIndex(x, y);
+  int index = worldCoordsToIndex(x, y);
 
   if (world->tiles[index].type == TILE_EMPTY) {
     world->tiles[index].type = type;
+    createTileEntity(&world->tiles[index], x, y);
+  }
+}
+
+void worldBreakTile(world_t *world, int x, int y, enum tile_type *type) {
+  assert(x >= 0 && x < WORLD_WIDTH);
+  assert(y >= 0 && y < WORLD_HEIGHT);
+  int index = worldCoordsToIndex(x, y);
+
+  if (type) {
+    *type = world->tiles[index].type;
+  }
+
+  if (world->tiles[index].type != TILE_EMPTY) {
+    world->tiles[index].type = TILE_EMPTY;
+    removeTileEntity(&world->tiles[index]);
   }
 }
 

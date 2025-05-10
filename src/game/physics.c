@@ -1,6 +1,9 @@
 #include "physics.h"
 
+#include <assert.h>
 #include <stdio.h>
+
+#define MAX_COLLISIONS 10
 
 typedef struct {
   vec2 velocity;
@@ -9,12 +12,14 @@ typedef struct {
 } rigidbody_t;
 
 typedef struct {
-  rigidbody_t rb;
+  unsigned int id;
   vec2 pos;
   vec2 size;
+  rigidbody_t rb;
 } body_t;
 
 typedef struct {
+  unsigned int id;
   vec2 pos;
   vec2 size;
 } staticBody_t;
@@ -30,8 +35,10 @@ typedef struct {
 
 static body_t bodies[100];
 static staticBody_t staticBodies[10000];
-static int bodyCount = 0;
-static int staticCount = 0;
+static unsigned int bodyCount = 0;
+static unsigned int staticCount = 0;
+static int nextBodyId = 0;
+static int nextStaticId = 0;
 static float gravity = 9.81f;
 
 void physicsInit() {
@@ -41,11 +48,13 @@ void physicsCleanup() {
 }
 
 unsigned int createBody(vec2 pos, vec2 size) {
-  body_t b = {0};
-  b.pos = pos;
-  b.size = size;
-  int id = bodyCount++;
-  bodies[id] = b;
+  int id = nextBodyId++;
+  body_t b = {
+    .pos = pos,
+    .size = size,
+    .id = id
+  };
+  bodies[bodyCount++] = b;
 
   return id;
 }
@@ -54,12 +63,13 @@ unsigned int createBody(vec2 pos, vec2 size) {
 // }
 
 unsigned int createStaticBody(vec2 pos, vec2 size) {
+  int id = nextStaticId++;
   staticBody_t b = {
     .pos = pos,
-    .size = size
+    .size = size,
+    .id = id
   };
-  int id = staticCount++;
-  staticBodies[id] = b;
+  staticBodies[staticCount++] = b;
 
   return id;
 }
@@ -67,10 +77,22 @@ unsigned int createStaticBody(vec2 pos, vec2 size) {
 // void removeBody(unsigned int id) {
 // }
 
+static int indexOf(unsigned int id, unsigned int *index) {
+  for (unsigned int i = 0; i < staticCount; i++) {
+    if (id == staticBodies[i].id) {
+      *index = i;
+      return 0;
+    }
+  }
+  return 1;
+}
+
 void removeStaticbody(unsigned int id) {
-  // this breaks references saved outside
+  unsigned int index;
+  assert(!indexOf(id, &index));
+
   staticCount--;
-  for (int i = id; i < staticCount; i++) {
+  for (unsigned int i = index; i < staticCount; i++) {
     staticBodies[i] = staticBodies[i + 1];
   }
 }
@@ -118,7 +140,7 @@ int quadQuadIntersection(vec2 posA, vec2 sizeA, vec2 posB, vec2 sizeB) {
 
 void physicsStep(double dt) {
   // printf("running physics step\n");
-  for (int i = 0; i < bodyCount; i++) {
+  for (unsigned int i = 0; i < bodyCount; i++) {
     // printf("pos: %f %f dt: %f\n", bodies[i].pos.x, bodies[i].pos.y, dt);
     // printf("vel: %f %f\n", bodies[i].rb.velocity.x, bodies[i].rb.velocity.y);
     // printf("applying forces\n");
@@ -130,18 +152,17 @@ void physicsStep(double dt) {
     bodies[i].pos.x += bodies[i].rb.velocity.x * dt;
 
     // printf("checking for collisions with dynamic bodies\n");
-    for (int j = 0; j < bodyCount; j++) {
+    for (unsigned int j = 0; j < bodyCount; j++) {
       if (i == j) continue;
       // TODO
     }
     // printf("checking for collisions with static bodies\n");
 
 
-    #define MAX_COLLISIONS 10
     int collisionCount = 0;
     collision_t collisions[MAX_COLLISIONS] = {0};
     // printf("player pos: %f %f\n", bodies[i].pos.x, bodies[i].pos.y);
-    for (int j = 0; j < staticCount; j++) {
+    for (unsigned int j = 0; j < staticCount; j++) {
       // printf("static pos: %f %f, size: %f %f\n", staticBodies[j].pos.x,staticBodies[j].pos.y,staticBodies[j].size.x,staticBodies[j].size.y);
       if (quadQuadIntersection(bodies[i].pos, bodies[i].size, staticBodies[j].pos, staticBodies[j].size)) {
         collision_t c = {

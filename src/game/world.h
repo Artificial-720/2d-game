@@ -29,6 +29,7 @@ void worldGenerate(world_t *world);
 void worldLoadTiles(world_t *world, int cameraX);
 void worldUnloadTiles(world_t *world, int cameraX);
 void worldPlaceTile(world_t *world, int x, int y, enum tile_type type);
+void worldBreakTile(world_t *world, int x, int y, enum tile_type *type);
 void worldTranslateToGrid(float x, float y, int *tileX, int *tileY);
 
 int worldPointInWorld(int x, int y);

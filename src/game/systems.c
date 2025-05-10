@@ -6,6 +6,7 @@
 #include "../platform/renderer2d.h"
 #include "ecs.h"
 #include "physics.h"
+#include "world.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,7 +91,15 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
       worldPlaceTile(world, tileX, tileY, TILE_GRASS);
     }
   }
-
+  if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
+    vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
+    int tileX, tileY;
+    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
+    if (worldPointInWorld(tileX, tileY)) {
+      enum tile_type broken;
+      worldBreakTile(world, tileX, tileY, &broken);
+    }
+  }
 
 
 }
