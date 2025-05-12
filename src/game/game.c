@@ -11,6 +11,7 @@
 
 #define PLAYER_START_X 10
 #define PLAYER_START_Y 100
+#define TICK_RATE (1.0f / 1.0f)
 
 typedef struct {
   camera_t camera;
@@ -19,9 +20,12 @@ typedef struct {
 } gameState_t;
 
 static gameState_t gameState;
+static double accumulated;
 
 
 int gameInit() {
+  accumulated = 0.0f;
+
   ecsInit();
 
   // register our ecs components
@@ -107,6 +111,7 @@ int gameInit() {
 }
 
 int gameFrame(double dt, input_t *input, output_t *output) {
+  accumulated += dt;
 
   // full screen toggle
   if (input->keyStates[KEY_F] == KEY_PRESS) {
@@ -130,7 +135,10 @@ int gameFrame(double dt, input_t *input, output_t *output) {
 
   // random tick
   // randomTick(gameState.world, dt);
-  growVegetation(gameState.world);
+  if (accumulated > TICK_RATE) {
+    growVegetation(gameState.world);
+    accumulated -= TICK_RATE;
+  }
   refreshWorld(gameState.world, gameState.camera.pos.x);
 
   return 0;

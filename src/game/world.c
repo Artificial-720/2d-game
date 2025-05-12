@@ -8,7 +8,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <strings.h>
 
 static void convertToGrid(float x, float y, int *ix, int *iy) {
   *ix = (int)x;
@@ -118,6 +117,7 @@ void worldGenerate(world_t *world, int seed) {
 }
 
 static void replaceTile(tile_t *tile, tile_e type) {
+  assert(tile->type != type);
   tile->type = type;
   tile->dirty = 1;
 }
@@ -145,13 +145,20 @@ static void updateGrass(world_t *world, int x, int y) {
   }
 
   // spread
-  if (validGrassLocation(world, x + 1, y)) {
-    int other = worldCoordsToIndex(world, x + 1, y);
-    replaceTile(&world->tiles[other], TILE_GRASS);
-  }
-  if (validGrassLocation(world, x - 1, y)) {
-    int other = worldCoordsToIndex(world, x - 1, y);
-    replaceTile(&world->tiles[other], TILE_GRASS);
+  if (rand() % 2) {
+    if (validGrassLocation(world, x + 1, y)) {
+      int other = worldCoordsToIndex(world, x + 1, y);
+      if (world->tiles[other].type != TILE_GRASS) {
+        replaceTile(&world->tiles[other], TILE_GRASS);
+      }
+    }
+  } else {
+    if (validGrassLocation(world, x - 1, y)) {
+      int other = worldCoordsToIndex(world, x - 1, y);
+      if (world->tiles[other].type != TILE_GRASS) {
+        replaceTile(&world->tiles[other], TILE_GRASS);
+      }
+    }
   }
 }
 
@@ -160,9 +167,12 @@ void growVegetation(world_t *world) {
   for (int i = 0; i < (world->width * world->height); i++) {
     int x, y;
     indexToWorldCoords(world, i, &x, &y);
-    // grass
-    if (world->tiles[i].type == TILE_GRASS) {
-      updateGrass(world, x, y);
+    if (world->tiles[i].dirty) continue;
+    switch (world->tiles[i].type) {
+      case TILE_GRASS:
+        updateGrass(world, x, y);
+      default:
+        ;
     }
   }
 }
@@ -185,6 +195,7 @@ static void createTileEntity(tile_t *tile, int x, int y) {
 
   tile->entityId = box;
   tile->loaded = 1;
+  tile->dirty = 0;
 }
 
 static void removeTileEntity(tile_t *tile) {
@@ -193,6 +204,7 @@ static void removeTileEntity(tile_t *tile) {
   ecsDeleteEntity(tile->entityId);
   tile->entityId = 0;
   tile->loaded = 0;
+  tile->dirty = 0;
 }
 
 
