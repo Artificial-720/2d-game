@@ -59,6 +59,7 @@ void spriteSystem() {
   free(entities);
 }
 
+tile_e held = TILE_DIRT;
 void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *world) {
   physics_t *playerBody = (physics_t*)ecsGetComponent(player, PHYSICS);
   vec2 velocity = getVelocity(playerBody->body);
@@ -82,10 +83,21 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
     }
   }
 
+  if (input->keyStates[KEY_1] == KEY_PRESS) {
+    held = TILE_DIRT;
+  } else if (input->keyStates[KEY_2] == KEY_PRESS) {
+    held = TILE_GRASS;
+  } else if (input->keyStates[KEY_3] == KEY_PRESS) {
+    held = TILE_SEED;
+  }
+
+
   // click input
   if (input->mouseStates[MOUSE_BUTTON_LEFT] == KEY_PRESS) {
     vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
-    worldPlaceTile(world, worldPos.x, worldPos.y, TILE_GRASS);
+    if (worldPlaceTile(world, worldPos.x, worldPos.y, held)) {
+      printf("placed tile\n");
+    }
   }
   if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
     vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);

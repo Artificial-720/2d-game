@@ -8,7 +8,7 @@
 #define TILE_LOAD_DISTANCE 20
 
 typedef enum {
-  TILE_EMPTY, TILE_DIRT, TILE_GRASS
+  TILE_EMPTY, TILE_DIRT, TILE_GRASS, TILE_SEED, TILE_WOOD
 } tile_e;
 
 typedef struct {
@@ -27,7 +27,7 @@ typedef struct {
 world_t *worldInit(int width, int height);
 void worldTerminate(world_t *world);
 
-void worldPlaceTile(world_t *world, float x, float y, tile_e type);
+int worldPlaceTile(world_t *world, float x, float y, tile_e type);
 void worldBreakTile(world_t *world, float x, float y, tile_e *broken);
 
 void worldGenerate(world_t *world, int seed);

@@ -132,12 +132,6 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   uiSystem(&gameState.camera, input);
   spriteSystem();
 
-  // load world
-  // worldLoadTiles(&gameState.world, tf->pos.x);
-  // worldUnloadTiles(&gameState.world, tf->pos.x);
-
-  // random tick
-  // randomTick(gameState.world, dt);
   if (accumulated > TICK_RATE) {
     growVegetation(gameState.world);
     accumulated -= TICK_RATE;

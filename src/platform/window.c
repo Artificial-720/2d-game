@@ -130,6 +130,9 @@ void pollInput(window_t *window, input_t *input) {
   for (int i = GLFW_KEY_A; i < GLFW_KEY_Z + 1; i++) {
     input->keyStates[i - GLFW_KEY_A] = getKey(window, i);
   }
+  for (int i = GLFW_KEY_0; i < GLFW_KEY_9 + 1; i++) {
+    input->keyStates[i - GLFW_KEY_0 + KEY_0] = getKey(window, i);
+  }
 
   input->keyStates[KEY_SPACE] = getKey(window, GLFW_KEY_SPACE);
 

@@ -5,6 +5,7 @@
 #include "physics.h"
 #include "texture.h"
 #include "ecs.h"
+#include "asset_map.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -34,9 +35,11 @@ static int worldCoordsToIndex(world_t *world, int x, int y) {
 static unsigned int getTileTextureId(tile_e type) {
   switch (type) {
     case TILE_DIRT:
-      return getTexture("assets/tiles/dirt.png");
+      return getTexture(SPRITE_DIRT);
     case TILE_GRASS:
-      return getTexture("assets/tiles/dirt_grass.png");
+      return getTexture(SPRITE_GRASS);
+    case TILE_SEED:
+      return getTexture(SPRITE_SEED);
     default:
       assert(0);
       return 0;
@@ -71,7 +74,7 @@ void worldTerminate(world_t *world) {
   }
 }
 
-void worldPlaceTile(world_t *world, float x, float y, tile_e type) {
+int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
   assert(world);
   int ix, iy;
   convertToGrid(x, y, &ix, &iy);
@@ -82,6 +85,8 @@ void worldPlaceTile(world_t *world, float x, float y, tile_e type) {
       world->tiles[index].dirty = 1;
     }
   }
+
+  return 1;
 }
 
 void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
