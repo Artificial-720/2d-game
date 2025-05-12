@@ -105,7 +105,6 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
     worldBreakTile(world, worldPos.x, worldPos.y, &broken);
   }
 
-
 }
 
 void cameraSystem(camera_t *camera, entity_t player, input_t *input) {

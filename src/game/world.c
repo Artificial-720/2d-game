@@ -84,9 +84,20 @@ void worldTerminate(world_t *world) {
   }
 }
 
+static int backgroundTile(tile_e type) {
+  if (type == TILE_SEED) {
+    return 1;
+  }
+  return 0;
+}
+
 static int canPlaceTile(world_t *world, int x, int y, tile_e type) {
   int index = worldCoordsToIndex(world, x, y);
-  if (world->tiles[index].type != TILE_EMPTY) return 0;
+  if (backgroundTile(type)) {
+    if (world->background[index].type != TILE_EMPTY) return 0;
+  } else {
+    if (world->tiles[index].type != TILE_EMPTY) return 0;
+  }
 
   if (type == TILE_SEED) {
     if (validGridCoords(world, x, y - 1)) {
@@ -106,8 +117,13 @@ int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
   if (validGridCoords(world, ix, iy)) {
     if (canPlaceTile(world, ix, iy, type)) {
       int index = worldCoordsToIndex(world, ix, iy);
-      world->tiles[index].type = type;
-      world->tiles[index].dirty = 1;
+      if (backgroundTile(type)) {
+        world->background[index].type = type;
+        world->background[index].dirty = 1;
+      } else {
+        world->tiles[index].type = type;
+        world->tiles[index].dirty = 1;
+      }
       return 1;
     }
   }
@@ -203,7 +219,6 @@ static void updateGrass(world_t *world, int x, int y) {
 static int seedCanGrow(world_t *world, int x, int y) {
   // tree is 3 tiles wide and x tiles high
   // with a chance of a branch of the side of the tiles
-  // so need to make sure have 3 x HEIGHT room
 
   int check[3 * TREE_MAX_HEIGHT] = {0};
   int next = 0;
@@ -222,8 +237,13 @@ static int seedCanGrow(world_t *world, int x, int y) {
 
   for (int i = 0; i < (3 * TREE_MAX_HEIGHT); i++) {
     int index = check[i];
-    if (world->tiles[index].type != TILE_EMPTY &&
-        world->tiles[index].type != TILE_SEED) {
+    // check foreground
+    if (world->tiles[index].type != TILE_EMPTY) {
+        return 0;
+    }
+    // check background
+    if (world->background[index].type != TILE_EMPTY &&
+        world->background[index].type != TILE_SEED) {
         return 0;
     }
   }
@@ -243,22 +263,22 @@ static void updateSeed(world_t *world, int x, int y) {
     if (i > (TREE_MAX_HEIGHT - 3)) {
       int left = worldCoordsToIndex(world, x - 1, localY);
       int right = worldCoordsToIndex(world, x + 1, localY);
-      replaceTile(&world->tiles[left], TILE_LEAVES);
-      replaceTile(&world->tiles[center], TILE_LEAVES);
-      replaceTile(&world->tiles[right], TILE_LEAVES);
+      replaceTile(&world->background[left], TILE_LEAVES);
+      replaceTile(&world->background[center], TILE_LEAVES);
+      replaceTile(&world->background[right], TILE_LEAVES);
       continue;
     }
-    replaceTile(&world->tiles[center], TILE_WOOD);
+    replaceTile(&world->background[center], TILE_WOOD);
 
     // grow branches
     if (i < LEAF_MIN_HEIGHT) continue;
     if (rand() % 100 < LEAF_CHANCE) {
       int left = worldCoordsToIndex(world, x - 1, localY);
-      replaceTile(&world->tiles[left], TILE_LEAVES);
+      replaceTile(&world->background[left], TILE_LEAVES);
     }
     if (rand() % 100 < LEAF_CHANCE) {
       int right = worldCoordsToIndex(world, x + 1, localY);
-      replaceTile(&world->tiles[right], TILE_LEAVES);
+      replaceTile(&world->background[right], TILE_LEAVES);
     }
   }
 }
@@ -273,6 +293,16 @@ void growVegetation(world_t *world) {
       case TILE_GRASS:
         updateGrass(world, x, y);
         break;
+      default:
+        ;
+    }
+  }
+
+  for (int i = 0; i < (world->width * world->height); i++) {
+    int x, y;
+    indexToWorldCoords(world, i, &x, &y);
+    if (world->background[i].dirty) continue;
+    switch (world->background[i].type) {
       case TILE_SEED:
         updateSeed(world, x, y);
         break;
@@ -286,21 +316,28 @@ void growVegetation(world_t *world) {
 // Loading and unloading tiles
 //-----------------------------------------------------------------------------
 
+// create tile entity for the background
 static void createTileEntity(tile_t *tile, int x, int y) {
   unsigned int texture = getTileTextureId(tile->type);
 
   entity_t box = ecsCreateEntity();
   sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = texture};
   transform_t transform = {.pos = (vec2){x, y}};
-  physics_t p = {.body = 0, .isStatic = 1};
-  p.body = createStaticBody((vec2){x, y}, (vec2){1.0f, 1.0f});
   ecsAddComponent(box, SPRITE, (void*)&sprite);
   ecsAddComponent(box, TRANSFORM, (void*)&transform);
-  ecsAddComponent(box, PHYSICS, (void*)&p);
 
   tile->entityId = box;
   tile->loaded = 1;
   tile->dirty = 0;
+}
+
+// create tile entity for the foreground
+static void createTileEntityForeground(tile_t *tile, int x, int y) {
+  createTileEntity(tile, x, y);
+
+  physics_t p = {.body = 0, .isStatic = 1};
+  p.body = createStaticBody((vec2){x, y}, (vec2){1.0f, 1.0f});
+  ecsAddComponent(tile->entityId, PHYSICS, (void*)&p);
 }
 
 static void removeTileEntity(tile_t *tile) {
@@ -338,7 +375,7 @@ void refreshWorld(world_t *world, float cameraX) {
       }
 
       if (world->tiles[i].type == TILE_EMPTY) continue;
-      createTileEntity(&world->tiles[i], x, y);
+      createTileEntityForeground(&world->tiles[i], x, y);
     } else {
       // should be unloaded
       if (!world->tiles[i].loaded) {
@@ -346,6 +383,30 @@ void refreshWorld(world_t *world, float cameraX) {
       }
 
       removeTileEntity(&world->tiles[i]);
+    }
+  }
+  // Handle background tiles
+  for (int i = 0; i < (world->height * world->width); i++) {
+    int x, y;
+    indexToWorldCoords(world, i, &x, &y);
+    if (x > cameraX - TILE_LOAD_DISTANCE && x < cameraX + TILE_LOAD_DISTANCE) {
+      // should be loaded
+      if (world->background[i].loaded) {
+        if (world->background[i].dirty) {
+          refreshTileEntity(&world->background[i]);
+        }
+        continue;
+      }
+
+      if (world->background[i].type == TILE_EMPTY) continue;
+      createTileEntity(&world->background[i], x, y);
+    } else {
+      // should be unloaded
+      if (!world->background[i].loaded) {
+        continue;
+      }
+
+      removeTileEntity(&world->background[i]);
     }
   }
 }
