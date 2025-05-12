@@ -65,8 +65,9 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
   // click input
   if (input->mouseStates[MOUSE_BUTTON_LEFT] == KEY_PRESS) {
     vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
-    if (worldPlaceTile(world, worldPos.x, worldPos.y, held)) {
-      printf("placed tile\n");
+    use_cb use = getUseItem(inventory[*selected].item);
+    if (use) {
+      use(world, inventory, *selected, (vec2){worldPos.x, worldPos.y});
     }
   }
   if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {

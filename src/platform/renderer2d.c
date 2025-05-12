@@ -158,7 +158,7 @@ int r2dInit() {
     .indicesCount = 0,
     .texturesCount = 0,
     .textures = 0,
-    .maxTextures = 8, // TODO query opengl
+    .maxTextures = 16, // TODO query opengl
     .view = mat4Init(1.0f),
     .projection = mat4Init(1.0f)
   };

@@ -6,6 +6,7 @@
 #include "../platform/sprite.h"
 #include "../platform/renderer2d.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 static int previousSelected;
@@ -41,19 +42,17 @@ void setupHud() {
   }
 }
 
-unsigned int getTextureId(item_e item) {
-  return getTexture("assets/Items/pick_iron.png");
-  (void)item;
-}
-
 void drawHud(camera_t *camera, item_t *inventory, int selected, input_t *input) {
   // refresh the hud
   for (int i = 0; i < 10; i++) {
-    sprite_t *sprite = (sprite_t*)ecsGetComponent(items[i], SPRITE);
-    sprite->texture = getTextureId(inventory[i].item);
-
     ui_t *ui = (ui_t*)ecsGetComponent(items[i], UI);
-    ui->enabled = (inventory[i].item != ITEM_EMPTY) ? 1 : 0;
+    if (inventory[i].item != ITEM_EMPTY) {
+      sprite_t *sprite = (sprite_t*)ecsGetComponent(items[i], SPRITE);
+      sprite->texture = getItemTextureId(inventory[i].item);
+      ui->enabled = 1;
+    } else {
+      ui->enabled = 0;
+    }
   }
 
   if (previousSelected != selected) {

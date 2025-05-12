@@ -56,6 +56,9 @@ int gameInit() {
 
   // populate default inventory
   gameState.inventory[0] = (item_t){ITEM_PICKAXE, 0};
+  gameState.inventory[1] = (item_t){ITEM_DIRT, 9};
+  gameState.inventory[2] = (item_t){ITEM_GRASS, 9};
+  gameState.inventory[3] = (item_t){ITEM_SEED, 9};
   gameState.selected = 0;
 
   // Create our world and load the area around the player
