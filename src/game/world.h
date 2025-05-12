@@ -35,4 +35,7 @@ void growVegetation(world_t *world);
 
 void refreshWorld(world_t *world, float cameraX);
 
+void drawBackground(world_t *world, float cameraX);
+void drawForeground(world_t *world, float cameraX);
+
 #endif

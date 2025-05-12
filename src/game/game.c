@@ -129,8 +129,10 @@ int gameFrame(double dt, input_t *input, output_t *output) {
 
   // render
   cameraSystem(&gameState.camera, gameState.player, input);
-  uiSystem(&gameState.camera, input);
-  spriteSystem();
+  drawBackground(gameState.world, gameState.camera.pos.x);
+  drawEntities();
+  drawForeground(gameState.world, gameState.camera.pos.x);
+  drawHud(&gameState.camera, input);
 
   if (accumulated > TICK_RATE) {
     growVegetation(gameState.world);

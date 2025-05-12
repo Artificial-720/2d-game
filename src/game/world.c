@@ -1,11 +1,12 @@
 #include "world.h"
 
-#include "../platform/sprite.h"
 #include "components.h"
 #include "physics.h"
 #include "texture.h"
 #include "ecs.h"
 #include "asset_map.h"
+#include "../platform/sprite.h"
+#include "../platform/renderer2d.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -318,12 +319,8 @@ void growVegetation(world_t *world) {
 
 // create tile entity for the background
 static void createTileEntity(tile_t *tile, int x, int y) {
-  unsigned int texture = getTileTextureId(tile->type);
-
   entity_t box = ecsCreateEntity();
-  sprite_t sprite = {.x = 0, .y = 0, .width = 1, .height = 1, .texture = texture};
   transform_t transform = {.pos = (vec2){x, y}};
-  ecsAddComponent(box, SPRITE, (void*)&sprite);
   ecsAddComponent(box, TRANSFORM, (void*)&transform);
 
   tile->entityId = box;
@@ -356,8 +353,6 @@ static void refreshTileEntity(tile_t *tile) {
     return;
   }
 
-  sprite_t *sprite = (sprite_t*)ecsGetComponent(tile->entityId, SPRITE);
-  sprite->texture = getTileTextureId(tile->type);
   tile->dirty = 0;
 }
 
@@ -407,6 +402,44 @@ void refreshWorld(world_t *world, float cameraX) {
       }
 
       removeTileEntity(&world->background[i]);
+    }
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// Draw
+//-----------------------------------------------------------------------------
+void drawBackground(world_t *world, float cameraX) {
+  sprite_t sprite = createSprite(0, 0, 1, 1, 0, 0);
+  for (int i = 0; i < (world->height * world->width); i++) {
+    int x, y;
+    indexToWorldCoords(world, i, &x, &y);
+    if (x > cameraX - TILE_LOAD_DISTANCE && x < cameraX + TILE_LOAD_DISTANCE) {
+      if (world->background[i].type == TILE_EMPTY) continue;
+
+      sprite.x = x;
+      sprite.y = y;
+      sprite.texture = getTileTextureId(world->background[i].type);
+
+      r2dDrawSprite(sprite);
+    }
+  }
+}
+
+void drawForeground(world_t *world, float cameraX) {
+  sprite_t sprite = createSprite(0, 0, 1, 1, 0, 0);
+  for (int i = 0; i < (world->height * world->width); i++) {
+    int x, y;
+    indexToWorldCoords(world, i, &x, &y);
+    if (x > cameraX - TILE_LOAD_DISTANCE && x < cameraX + TILE_LOAD_DISTANCE) {
+      if (world->tiles[i].type == TILE_EMPTY) continue;
+
+      sprite.x = x;
+      sprite.y = y;
+      sprite.texture = getTileTextureId(world->tiles[i].type);
+
+      r2dDrawSprite(sprite);
     }
   }
 }

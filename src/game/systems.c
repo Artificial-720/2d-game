@@ -11,54 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void uiSystem(camera_t *camera, input_t * input) {
-  float h = input->windowHeight;
-  float w = input->windowWidth;
-  mat4 proj = orthographic(0, w, h, 0, 0, 1);
-  mat4 view = mat4Init(1.0f);
-  r2dSetView(view);
-  r2dSetProjection(proj);
-
-
-  int count = 0;
-  unsigned long sig = ecsGetSignature(UI) | ecsGetSignature(SPRITE);
-  entity_t *entities = ecsQuery(sig, &count);
-
-  for (int i = 0; i < count; i++) {
-    entity_t entity = entities[i];
-    ui_t *ui = (ui_t*)ecsGetComponent(entity, UI);
-    sprite_t *sprite = (sprite_t*)ecsGetComponent(entity, SPRITE);
-
-    sprite->x = ui->pos.x;
-    sprite->y = ui->pos.y;
-    r2dDrawSprite(*sprite);
-  }
-
-  free(entities);
-
-
-  // set back to camera for world
-  r2dSetView(camera->view);
-  r2dSetProjection(camera->projection);
-}
-
-void spriteSystem() {
-  int count = 0;
-  unsigned long sig = ecsGetSignature(SPRITE) | ecsGetSignature(TRANSFORM);
-  entity_t *entities = ecsQuery(sig, &count);
-
-  for (int i = 0; i < count; i++) {
-    entity_t entity = entities[i];
-    sprite_t *sprite = (sprite_t*)ecsGetComponent(entity, SPRITE);
-    transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
-    sprite->x = transform->pos.x;
-    sprite->y = transform->pos.y;
-    r2dDrawSprite(*sprite);
-  }
-
-  free(entities);
-}
-
 tile_e held = TILE_DIRT;
 void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *world) {
   physics_t *playerBody = (physics_t*)ecsGetComponent(player, PHYSICS);
@@ -138,4 +90,52 @@ void physicsSystem(double dt) {
     transform->pos = getPosition(physics->body);
   }
   free(entities);
+}
+
+void drawEntities() {
+  int count = 0;
+  unsigned long sig = ecsGetSignature(SPRITE) | ecsGetSignature(TRANSFORM);
+  entity_t *entities = ecsQuery(sig, &count);
+
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    sprite_t *sprite = (sprite_t*)ecsGetComponent(entity, SPRITE);
+    transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+    sprite->x = transform->pos.x;
+    sprite->y = transform->pos.y;
+    r2dDrawSprite(*sprite);
+  }
+
+  free(entities);
+}
+
+void drawHud(camera_t *camera, input_t *input) {
+  float h = input->windowHeight;
+  float w = input->windowWidth;
+  mat4 proj = orthographic(0, w, h, 0, 0, 1);
+  mat4 view = mat4Init(1.0f);
+  r2dSetView(view);
+  r2dSetProjection(proj);
+
+
+  int count = 0;
+  unsigned long sig = ecsGetSignature(UI) | ecsGetSignature(SPRITE);
+  entity_t *entities = ecsQuery(sig, &count);
+
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    ui_t *ui = (ui_t*)ecsGetComponent(entity, UI);
+    sprite_t *sprite = (sprite_t*)ecsGetComponent(entity, SPRITE);
+
+    sprite->x = ui->pos.x;
+    sprite->y = ui->pos.y;
+    r2dDrawSprite(*sprite);
+  }
+
+  free(entities);
+
+
+  // set back to camera for world
+  r2dSetView(camera->view);
+  r2dSetProjection(camera->projection);
 }
