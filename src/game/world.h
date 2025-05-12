@@ -5,34 +5,34 @@
 // #define WORLD_HEIGHT 2400
 #define WORLD_WIDTH 15
 #define WORLD_HEIGHT 30
-#define WORLD_TILE_COUNT (WORLD_HEIGHT * WORLD_WIDTH)
 #define TILE_LOAD_DISTANCE 20
 
-enum tile_type {
+typedef enum {
   TILE_EMPTY, TILE_DIRT, TILE_GRASS
-};
+} tile_e;
 
 typedef struct {
   int entityId;
   int loaded;
-  enum tile_type type;
+  int dirty;
+  tile_e type;
 } tile_t;
 
 typedef struct {
   tile_t *tiles;
+  tile_t *background;
+  int width, height;
 } world_t;
 
-world_t worldInit();
+world_t *worldInit(int width, int height);
 void worldTerminate(world_t *world);
 
-void worldGenerate(world_t *world);
-void worldLoadTiles(world_t *world, int cameraX);
-void worldUnloadTiles(world_t *world, int cameraX);
-void worldPlaceTile(world_t *world, int x, int y, enum tile_type type);
-void worldBreakTile(world_t *world, int x, int y, enum tile_type *type);
-void worldTranslateToGrid(float x, float y, int *tileX, int *tileY);
-void worldRandomTick(world_t *world, double dt);
+void worldPlaceTile(world_t *world, float x, float y, tile_e type);
+void worldBreakTile(world_t *world, float x, float y, tile_e *broken);
 
-int worldPointInWorld(int x, int y);
+void worldGenerate(world_t *world, int seed);
+void growVegetation(world_t *world);
+
+void refreshWorld(world_t *world, float cameraX);
 
 #endif

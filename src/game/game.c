@@ -15,11 +15,10 @@
 typedef struct {
   camera_t camera;
   entity_t player;
-  world_t world;
+  world_t *world;
 } gameState_t;
 
 static gameState_t gameState;
-
 
 
 int gameInit() {
@@ -66,12 +65,10 @@ int gameInit() {
 
 
   // Create our world and load the area around the player
-  gameState.world = worldInit();
-  // generate our world
-  worldGenerate(&gameState.world);
-
-  // load in initial world
-  worldLoadTiles(&gameState.world, transform.pos.x);
+  gameState.world = worldInit(WORLD_WIDTH, WORLD_HEIGHT);
+  worldGenerate(gameState.world, 10);
+  // load in initial world, load the tiles around the player
+  refreshWorld(gameState.world, gameState.camera.pos.x);
 
 
   // create a test world
@@ -110,7 +107,6 @@ int gameInit() {
 }
 
 int gameFrame(double dt, input_t *input, output_t *output) {
-  transform_t *tf = (transform_t*)ecsGetComponent(gameState.player, TRANSFORM);
 
   // full screen toggle
   if (input->keyStates[KEY_F] == KEY_PRESS) {
@@ -118,7 +114,7 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   }
 
   // player movement
-  inputSystem(gameState.player, input, &gameState.camera, &gameState.world);
+  inputSystem(gameState.player, input, &gameState.camera, gameState.world);
 
   // update physics
   physicsSystem(dt);
@@ -129,16 +125,18 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   spriteSystem();
 
   // load world
-  worldLoadTiles(&gameState.world, tf->pos.x);
-  worldUnloadTiles(&gameState.world, tf->pos.x);
+  // worldLoadTiles(&gameState.world, tf->pos.x);
+  // worldUnloadTiles(&gameState.world, tf->pos.x);
 
   // random tick
-  worldRandomTick(&gameState.world, dt);
+  // randomTick(gameState.world, dt);
+  growVegetation(gameState.world);
+  refreshWorld(gameState.world, gameState.camera.pos.x);
 
   return 0;
 }
 
 void gameTerminate() {
-  worldTerminate(&gameState.world);
+  worldTerminate(gameState.world);
   ecsTerminate();
 }

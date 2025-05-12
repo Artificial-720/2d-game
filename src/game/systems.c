@@ -85,20 +85,12 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
   // click input
   if (input->mouseStates[MOUSE_BUTTON_LEFT] == KEY_PRESS) {
     vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
-    int tileX, tileY;
-    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
-    if (worldPointInWorld(tileX, tileY)) {
-      worldPlaceTile(world, tileX, tileY, TILE_GRASS);
-    }
+    worldPlaceTile(world, worldPos.x, worldPos.y, TILE_GRASS);
   }
   if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
     vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
-    int tileX, tileY;
-    worldTranslateToGrid(worldPos.x, worldPos.y, &tileX, &tileY);
-    if (worldPointInWorld(tileX, tileY)) {
-      enum tile_type broken;
-      worldBreakTile(world, tileX, tileY, &broken);
-    }
+    tile_e broken = TILE_EMPTY;
+    worldBreakTile(world, worldPos.x, worldPos.y, &broken);
   }
 
 
