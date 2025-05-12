@@ -16,9 +16,5 @@ typedef struct {
   int isStatic;
 } physics_t;
 
-typedef struct {
-  vec2 pos; // screen space
-} ui_t;
-
 
 #endif

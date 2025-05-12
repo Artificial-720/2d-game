@@ -6,13 +6,14 @@
 #include "../platform/renderer2d.h"
 #include "ecs.h"
 #include "physics.h"
+#include "ui.h"
 #include "world.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 tile_e held = TILE_DIRT;
-void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *world) {
+void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *world, item_t *inventory, int *selected) {
   physics_t *playerBody = (physics_t*)ecsGetComponent(player, PHYSICS);
   vec2 velocity = getVelocity(playerBody->body);
   if (input->keyStates[KEY_A] == KEY_HELD) {
@@ -36,11 +37,28 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
   }
 
   if (input->keyStates[KEY_1] == KEY_PRESS) {
+    *selected = 0;
     held = TILE_DIRT;
   } else if (input->keyStates[KEY_2] == KEY_PRESS) {
+    *selected = 1;
     held = TILE_GRASS;
   } else if (input->keyStates[KEY_3] == KEY_PRESS) {
+    *selected = 2;
     held = TILE_SEED;
+  } else if (input->keyStates[KEY_4] == KEY_PRESS) {
+    *selected = 3;
+  } else if (input->keyStates[KEY_5] == KEY_PRESS) {
+    *selected = 4;
+  } else if (input->keyStates[KEY_6] == KEY_PRESS) {
+    *selected = 5;
+  } else if (input->keyStates[KEY_7] == KEY_PRESS) {
+    *selected = 6;
+  } else if (input->keyStates[KEY_8] == KEY_PRESS) {
+    *selected = 7;
+  } else if (input->keyStates[KEY_9] == KEY_PRESS) {
+    *selected = 8;
+  } else if (input->keyStates[KEY_0] == KEY_PRESS) {
+    *selected = 9;
   }
 
 
@@ -56,6 +74,8 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
     tile_e broken = TILE_EMPTY;
     worldBreakTile(world, worldPos.x, worldPos.y, &broken);
   }
+
+  (void)inventory;
 
 }
 
@@ -109,33 +129,3 @@ void drawEntities() {
   free(entities);
 }
 
-void drawHud(camera_t *camera, input_t *input) {
-  float h = input->windowHeight;
-  float w = input->windowWidth;
-  mat4 proj = orthographic(0, w, h, 0, 0, 1);
-  mat4 view = mat4Init(1.0f);
-  r2dSetView(view);
-  r2dSetProjection(proj);
-
-
-  int count = 0;
-  unsigned long sig = ecsGetSignature(UI) | ecsGetSignature(SPRITE);
-  entity_t *entities = ecsQuery(sig, &count);
-
-  for (int i = 0; i < count; i++) {
-    entity_t entity = entities[i];
-    ui_t *ui = (ui_t*)ecsGetComponent(entity, UI);
-    sprite_t *sprite = (sprite_t*)ecsGetComponent(entity, SPRITE);
-
-    sprite->x = ui->pos.x;
-    sprite->y = ui->pos.y;
-    r2dDrawSprite(*sprite);
-  }
-
-  free(entities);
-
-
-  // set back to camera for world
-  r2dSetView(camera->view);
-  r2dSetProjection(camera->projection);
-}
