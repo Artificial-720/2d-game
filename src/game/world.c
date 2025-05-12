@@ -10,6 +10,12 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#define SEED_GROW_CHANCE 50
+#define LEAF_CHANCE 45
+#define LEAF_MIN_HEIGHT 4
+#define TREE_MAX_HEIGHT 10
+#define TREE_BRANCH_CHANCE 10
+
 static void convertToGrid(float x, float y, int *ix, int *iy) {
   *ix = (int)x;
   *iy = (int)(y + 1);
@@ -40,6 +46,10 @@ static unsigned int getTileTextureId(tile_e type) {
       return getTexture(SPRITE_GRASS);
     case TILE_SEED:
       return getTexture(SPRITE_SEED);
+    case TILE_WOOD:
+      return getTexture(SPRITE_WOOD);
+    case TILE_LEAVES:
+      return getTexture(SPRITE_LEAVES);
     default:
       assert(0);
       return 0;
@@ -74,19 +84,35 @@ void worldTerminate(world_t *world) {
   }
 }
 
+static int canPlaceTile(world_t *world, int x, int y, tile_e type) {
+  int index = worldCoordsToIndex(world, x, y);
+  if (world->tiles[index].type != TILE_EMPTY) return 0;
+
+  if (type == TILE_SEED) {
+    if (validGridCoords(world, x, y - 1)) {
+      int other = worldCoordsToIndex(world, x, y - 1);
+      return (world->tiles[other].type == TILE_GRASS) ? 1 : 0;
+    }
+    return 0;
+  }
+
+  return 1;
+}
+
 int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
   assert(world);
   int ix, iy;
   convertToGrid(x, y, &ix, &iy);
   if (validGridCoords(world, ix, iy)) {
-    int index = worldCoordsToIndex(world, ix, iy);
-    if (world->tiles[index].type == TILE_EMPTY) {
+    if (canPlaceTile(world, ix, iy, type)) {
+      int index = worldCoordsToIndex(world, ix, iy);
       world->tiles[index].type = type;
       world->tiles[index].dirty = 1;
+      return 1;
     }
   }
 
-  return 1;
+  return 0;
 }
 
 void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
@@ -121,6 +147,10 @@ void worldGenerate(world_t *world, int seed) {
   (void)seed;
 }
 
+//-----------------------------------------------------------------------------
+// Growth
+//-----------------------------------------------------------------------------
+
 static void replaceTile(tile_t *tile, tile_e type) {
   assert(tile->type != type);
   tile->type = type;
@@ -135,7 +165,10 @@ static int validGrassLocation(world_t *world, int x, int y) {
   if (world->tiles[index].type == TILE_GRASS ||
       world->tiles[index].type == TILE_DIRT) {
     int above = worldCoordsToIndex(world, x, y + 1);
-    return  (world->tiles[above].type == TILE_EMPTY) ? 1 : 0;
+    if (world->tiles[above].type == TILE_EMPTY ||
+        world->tiles[above].type == TILE_SEED) {
+      return 1;
+    }
   }
   return 0;
 }
@@ -167,6 +200,69 @@ static void updateGrass(world_t *world, int x, int y) {
   }
 }
 
+static int seedCanGrow(world_t *world, int x, int y) {
+  // tree is 3 tiles wide and x tiles high
+  // with a chance of a branch of the side of the tiles
+  // so need to make sure have 3 x HEIGHT room
+
+  int check[3 * TREE_MAX_HEIGHT] = {0};
+  int next = 0;
+
+  for (int i = 0; i < TREE_MAX_HEIGHT; i++) {
+    int localY = y + i;
+    if (!validGridCoords(world, x - 1, localY) ||
+      !validGridCoords(world, x, localY) ||
+      !validGridCoords(world, x + 1, localY)) {
+      return 0;
+    }
+    check[next++] = worldCoordsToIndex(world, x - 1, localY);
+    check[next++] = worldCoordsToIndex(world, x, localY);
+    check[next++] = worldCoordsToIndex(world, x + 1, localY);
+  }
+
+  for (int i = 0; i < (3 * TREE_MAX_HEIGHT); i++) {
+    int index = check[i];
+    if (world->tiles[index].type != TILE_EMPTY &&
+        world->tiles[index].type != TILE_SEED) {
+        return 0;
+    }
+  }
+
+  return 1;
+}
+
+static void updateSeed(world_t *world, int x, int y) {
+  if (!seedCanGrow(world, x, y)) return;
+  if (!(rand() % 100 < SEED_GROW_CHANCE)) return;
+
+  // grow the tree
+  for (int i = 0; i < TREE_MAX_HEIGHT; i++) {
+    int localY = y + i;
+    int center = worldCoordsToIndex(world, x, localY);
+    // place top on tree
+    if (i > (TREE_MAX_HEIGHT - 3)) {
+      int left = worldCoordsToIndex(world, x - 1, localY);
+      int right = worldCoordsToIndex(world, x + 1, localY);
+      replaceTile(&world->tiles[left], TILE_LEAVES);
+      replaceTile(&world->tiles[center], TILE_LEAVES);
+      replaceTile(&world->tiles[right], TILE_LEAVES);
+      continue;
+    }
+    replaceTile(&world->tiles[center], TILE_WOOD);
+
+    // grow branches
+    if (i < LEAF_MIN_HEIGHT) continue;
+    if (rand() % 100 < LEAF_CHANCE) {
+      int left = worldCoordsToIndex(world, x - 1, localY);
+      replaceTile(&world->tiles[left], TILE_LEAVES);
+    }
+    if (rand() % 100 < LEAF_CHANCE) {
+      int right = worldCoordsToIndex(world, x + 1, localY);
+      replaceTile(&world->tiles[right], TILE_LEAVES);
+    }
+  }
+}
+
 void growVegetation(world_t *world) {
   assert(world);
   for (int i = 0; i < (world->width * world->height); i++) {
@@ -176,6 +272,10 @@ void growVegetation(world_t *world) {
     switch (world->tiles[i].type) {
       case TILE_GRASS:
         updateGrass(world, x, y);
+        break;
+      case TILE_SEED:
+        updateSeed(world, x, y);
+        break;
       default:
         ;
     }

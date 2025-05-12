@@ -5,5 +5,6 @@
 #define SPRITE_GRASS "assets/tiles/dirt_grass.png"
 #define SPRITE_SEED "assets/tiles/grass1.png"
 #define SPRITE_WOOD "assets/tiles/trunk_side.png"
+#define SPRITE_LEAVES "assets/tiles/leaves.png"
 
 #endif
