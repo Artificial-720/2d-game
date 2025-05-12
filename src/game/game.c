@@ -7,6 +7,7 @@
 #include "systems.h"
 #include "camera.h"
 #include "texture.h"
+#include "../platform/renderer2d.h"
 #include "../platform/sprite.h"
 
 #define PLAYER_START_X 10
@@ -25,6 +26,8 @@ static double accumulated;
 
 int gameInit() {
   accumulated = 0.0f;
+  // Set sky color
+  r2dSetClearColorRGBA(130.0f, 190.0f, 253.0f, 1.0f);
 
   ecsInit();
 

@@ -187,7 +187,6 @@ void r2dTerminate() {
 }
 
 void r2dClear() {
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -258,4 +257,8 @@ sprite_t createSprite(float x, float y, float width, float height, float rotatio
     .texture = textureID
   };
   return sprite;
+}
+
+void r2dSetClearColorRGBA(float r, float g, float b, float a) {
+  glClearColor(r / 256, g / 256, b / 256, a);
 }

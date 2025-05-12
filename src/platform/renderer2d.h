@@ -16,6 +16,8 @@ void r2dDrawSprite(sprite_t sprite);
 
 void r2dSetView(mat4 a);
 void r2dSetProjection(mat4 a);
+// 256 max
+void r2dSetClearColorRGBA(float r, float g, float b, float a);
 
 // the code i have seen is renderer.render(camera, scene);
 // something like that so ever time i am drawing stuff its from some camera
