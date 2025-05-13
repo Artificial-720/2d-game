@@ -6,13 +6,10 @@
 #include "../platform/renderer2d.h"
 #include "ecs.h"
 #include "physics.h"
-#include "ui.h"
 #include "world.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 
-tile_e held = TILE_DIRT;
 void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *world, item_t *inventory, int *selected) {
   physics_t *playerBody = (physics_t*)ecsGetComponent(player, PHYSICS);
   vec2 velocity = getVelocity(playerBody->body);
@@ -38,13 +35,10 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
 
   if (input->keyStates[KEY_1] == KEY_PRESS) {
     *selected = 0;
-    held = TILE_DIRT;
   } else if (input->keyStates[KEY_2] == KEY_PRESS) {
     *selected = 1;
-    held = TILE_GRASS;
   } else if (input->keyStates[KEY_3] == KEY_PRESS) {
     *selected = 2;
-    held = TILE_SEED;
   } else if (input->keyStates[KEY_4] == KEY_PRESS) {
     *selected = 3;
   } else if (input->keyStates[KEY_5] == KEY_PRESS) {
@@ -70,13 +64,11 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
       use(world, inventory, *selected, (vec2){worldPos.x, worldPos.y});
     }
   }
-  if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
-    vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
-    tile_e broken = TILE_EMPTY;
-    worldBreakTile(world, worldPos.x, worldPos.y, &broken);
-  }
-
-  (void)inventory;
+  // if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
+  //   vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
+  //   tile_e broken = TILE_EMPTY;
+  //   worldBreakTile(world, worldPos.x, worldPos.y, &broken);
+  // }
 
 }
 

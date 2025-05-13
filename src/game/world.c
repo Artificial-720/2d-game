@@ -141,7 +141,22 @@ void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
     if (broken) {
       *broken = world->tiles[index].type;
     }
+
     if (world->tiles[index].type != TILE_EMPTY) {
+      // spawn a little tile item
+      float itemx = ((float)rand() / RAND_MAX) + ix;
+      float itemy = ((float)rand() / RAND_MAX) + iy;
+      unsigned int texture = getTileTextureId(world->tiles[index].type);
+      entity_t item = ecsCreateEntity();
+      sprite_t sprite = createSprite(ix, iy, 0.5f, 0.5f, 0, texture);
+      transform_t transform = {.pos = (vec2){ix, iy}};
+      physics_t p = {.body = 0, .isStatic = 0};
+      p.body = createBody((vec2){itemx, itemy}, (vec2){0.5f, 0.5f});
+      ecsAddComponent(item, SPRITE, (void*)&sprite);
+      ecsAddComponent(item, TRANSFORM, (void*)&transform);
+      ecsAddComponent(item, PHYSICS, (void*)&p);
+
+      // actually remove tile
       world->tiles[index].type = TILE_EMPTY;
       world->tiles[index].dirty = 1;
     }

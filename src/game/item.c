@@ -30,6 +30,13 @@ void placeBlock(world_t *world, item_t *inventory, int selected, vec2 worldPos) 
   }
 }
 
+void breakBlockForeground(world_t *world, item_t *inventory, int selected, vec2 worldPos) {
+  (void)inventory;
+  (void)selected;
+  tile_e broken = TILE_EMPTY;
+  worldBreakTile(world, worldPos.x, worldPos.y, &broken);
+}
+
 
 
 use_cb getUseItem(item_e item) {
@@ -38,6 +45,8 @@ use_cb getUseItem(item_e item) {
     case ITEM_GRASS:
     case ITEM_SEED:
       return placeBlock;
+    case ITEM_PICKAXE:
+      return breakBlockForeground;
     default:
       return 0;
   }
