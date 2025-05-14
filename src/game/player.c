@@ -1,4 +1,6 @@
 #include "player.h"
+#include "item.h"
+#include "world.h"
 
 #include <assert.h>
 
@@ -36,6 +38,11 @@ void breakBlockForeground(world_t *world, player_t *player, vec2 usePos) {
   (void)player;
 }
 
+void breakBlockBackground(world_t *world, player_t *player, vec2 usePos) {
+  worldBreakTileBackground(world, usePos.x, usePos.y);
+  (void)player;
+}
+
 
 
 use_cb getUseItem(item_e item) {
@@ -46,6 +53,8 @@ use_cb getUseItem(item_e item) {
       return placeBlock;
     case ITEM_PICKAXE:
       return breakBlockForeground;
+    case ITEM_AXE:
+      return breakBlockBackground;
     default:
       return 0;
   }

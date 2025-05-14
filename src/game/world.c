@@ -58,6 +58,18 @@ static unsigned int getTileTextureId(tile_e type) {
   }
 }
 
+static int backgroundTile(tile_e type) {
+  switch (type) {
+    case TILE_SEED:
+    case TILE_WOOD:
+    case TILE_LEAVES:
+      return 1;
+    default:
+      return 0;
+  }
+  return 0;
+}
+
 world_t *worldInit(int width, int height) {
   assert(width > 0 && height > 0);
   world_t *world = (world_t*)malloc(sizeof(world_t));
@@ -86,12 +98,6 @@ void worldTerminate(world_t *world) {
   }
 }
 
-static int backgroundTile(tile_e type) {
-  if (type == TILE_SEED) {
-    return 1;
-  }
-  return 0;
-}
 
 static int canPlaceTile(world_t *world, int x, int y, tile_e type) {
   int index = worldCoordsToIndex(world, x, y);
@@ -138,11 +144,27 @@ static item_e tileToItem(tile_e tile) {
     case TILE_DIRT:
       return ITEM_DIRT;
     case TILE_GRASS:
-      return ITEM_GRASS;
+      return ITEM_DIRT;
+    case TILE_WOOD:
+      return ITEM_WOOD;
     default:
       assert(0);
       return ITEM_EMPTY;
   }
+}
+
+static void spawnPickupTile(tile_e type, int x, int y) {
+  unsigned int texture = getTileTextureId(type);
+  entity_t item = ecsCreateEntity();
+  sprite_t sprite = createSprite(x, y, 0.5f, 0.5f, 0, texture);
+  transform_t transform = {.pos = (vec2){x, y}};
+  pickup_t pickup = {.item = tileToItem(type)};
+  physics_t p = {.body = 0, .isStatic = 0};
+  p.body = createBody((vec2){x, y}, (vec2){0.5f, 0.5f});
+  ecsAddComponent(item, SPRITE, (void*)&sprite);
+  ecsAddComponent(item, TRANSFORM, (void*)&transform);
+  ecsAddComponent(item, PHYSICS, (void*)&p);
+  ecsAddComponent(item, PICKUP, (void*)&pickup);
 }
 
 void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
@@ -156,23 +178,27 @@ void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
     }
 
     if (world->tiles[index].type != TILE_EMPTY) {
-      // spawn a little tile item
-      unsigned int texture = getTileTextureId(world->tiles[index].type);
-      entity_t item = ecsCreateEntity();
-      sprite_t sprite = createSprite(ix, iy, 0.5f, 0.5f, 0, texture);
-      transform_t transform = {.pos = (vec2){ix, iy}};
-      // todo do the right item
-      pickup_t pickup = {.item = tileToItem(world->tiles[index].type)};
-      physics_t p = {.body = 0, .isStatic = 0};
-      p.body = createBody((vec2){ix, iy}, (vec2){0.5f, 0.5f});
-      ecsAddComponent(item, SPRITE, (void*)&sprite);
-      ecsAddComponent(item, TRANSFORM, (void*)&transform);
-      ecsAddComponent(item, PHYSICS, (void*)&p);
-      ecsAddComponent(item, PICKUP, (void*)&pickup);
+      spawnPickupTile(world->tiles[index].type, ix, iy);
 
       // actually remove tile
       world->tiles[index].type = TILE_EMPTY;
       world->tiles[index].dirty = 1;
+    }
+  }
+}
+
+void worldBreakTileBackground(world_t *world, float x, float y) {
+  assert(world);
+  int ix, iy;
+  convertToGrid(x, y, &ix, &iy);
+  if (validGridCoords(world, ix, iy)) {
+    int index = worldCoordsToIndex(world, ix, iy);
+    if (world->background[index].type != TILE_EMPTY) {
+      spawnPickupTile(world->background[index].type, ix, iy);
+
+      // actually remove tile
+      world->background[index].type = TILE_EMPTY;
+      world->background[index].dirty = 1;
     }
   }
 }
@@ -367,23 +393,16 @@ static void createTileEntityForeground(tile_t *tile, int x, int y) {
 }
 
 static void removeTileEntity(tile_t *tile) {
-  physics_t *p = (physics_t*)ecsGetComponent(tile->entityId, PHYSICS);
-  removeStaticbody(p->body);
+  if (!backgroundTile(tile->type)) {
+    physics_t *p = (physics_t*)ecsGetComponent(tile->entityId, PHYSICS);
+    removeStaticbody(p->body);
+  }
   ecsDeleteEntity(tile->entityId);
   tile->entityId = 0;
   tile->loaded = 0;
   tile->dirty = 0;
 }
 
-
-static void refreshTileEntity(tile_t *tile) {
-  if (tile->loaded && tile->type == TILE_EMPTY) {
-    removeTileEntity(tile);
-    return;
-  }
-
-  tile->dirty = 0;
-}
 
 void refreshWorld(world_t *world, float cameraX) {
   for (int i = 0; i < (world->height * world->width); i++) {
@@ -393,7 +412,14 @@ void refreshWorld(world_t *world, float cameraX) {
       // should be loaded
       if (world->tiles[i].loaded) {
         if (world->tiles[i].dirty) {
-          refreshTileEntity(&world->tiles[i]);
+          if (world->tiles[i].type == TILE_EMPTY) {
+            physics_t *p = (physics_t*)ecsGetComponent(world->tiles[i].entityId, PHYSICS);
+            removeStaticbody(p->body);
+            ecsDeleteEntity(world->tiles[i].entityId);
+            world->tiles[i].entityId = 0;
+            world->tiles[i].loaded = 0;
+            world->tiles[i].dirty = 0;
+          }
         }
         continue;
       }
@@ -417,7 +443,12 @@ void refreshWorld(world_t *world, float cameraX) {
       // should be loaded
       if (world->background[i].loaded) {
         if (world->background[i].dirty) {
-          refreshTileEntity(&world->background[i]);
+          if (world->tiles[i].type == TILE_EMPTY) {
+            ecsDeleteEntity(world->background[i].entityId);
+            world->background[i].entityId = 0;
+            world->background[i].loaded = 0;
+            world->background[i].dirty = 0;
+          }
         }
         continue;
       }

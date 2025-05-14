@@ -8,6 +8,7 @@ typedef enum {
   ITEM_DIRT,
   ITEM_GRASS,
   ITEM_SEED,
+  ITEM_WOOD,
   ITEM_PICKAXE,
   ITEM_AXE,
 } item_e;

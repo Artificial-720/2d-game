@@ -29,6 +29,7 @@ void worldTerminate(world_t *world);
 
 int worldPlaceTile(world_t *world, float x, float y, tile_e type);
 void worldBreakTile(world_t *world, float x, float y, tile_e *broken);
+void worldBreakTileBackground(world_t *world, float x, float y);
 
 void worldGenerate(world_t *world, int seed);
 void growVegetation(world_t *world);
