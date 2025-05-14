@@ -63,7 +63,7 @@ void inputSystem(player_t *player, camera_t *camera, world_t *world, input_t *in
     vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
     use_cb use = getUseItem(player->inventory[player->selected].item);
     if (use) {
-      use(world, player->inventory, player->selected, (vec2){worldPos.x, worldPos.y});
+      use(world, player, (vec2){worldPos.x, worldPos.y});
     }
   }
   // if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
@@ -140,36 +140,9 @@ void pickupItems(player_t *player) {
 
     float dis = distance(a, b);
     if (dis < player->pickupDis) {
-      int slot = -1;
-      // find a slot for the item
-      // check if already have the item
-      for (int j = 0; j < INVENTORY_SIZE; j++) {
-        if (player->inventory[j].item == pickup->item) {
-          slot = j;
-          break;
-        }
-      }
-      // if dont have the item find a empty slot
-      if (slot < 0) {
-        for (int j = 0; j < INVENTORY_SIZE; j++) {
-          if (player->inventory[j].item == ITEM_EMPTY) {
-            slot = j;
-            break;
-          }
-        }
-      }
-
-      if (slot < 0) {
-        // couldnt find a slot
-      } else {
-        // place into inventory
-        if (player->inventory[slot].item == ITEM_EMPTY) {
-          player->inventory[slot].item = pickup->item;
-        }
-        player->inventory[slot].count++;
+      if (giveItemToPlayer(player, pickup->item, 1)) {
         ecsDeleteEntity(entity);
       }
-
     }
   }
 

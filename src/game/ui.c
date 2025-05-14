@@ -44,7 +44,7 @@ void setupHud() {
 }
 
 void drawHud(player_t *player, camera_t *camera, input_t *input) {
-  item_t *inventory = player->inventory;
+  slot_t *inventory = player->inventory;
   int selected = player->selected;
 
   // refresh the hud

@@ -58,10 +58,11 @@ int gameInit() {
   setupHud();
 
   // populate default inventory
-  gameState.player.inventory[0] = (item_t){ITEM_PICKAXE, 1};
-  gameState.player.inventory[1] = (item_t){ITEM_DIRT, 9};
-  gameState.player.inventory[2] = (item_t){ITEM_GRASS, 9};
-  gameState.player.inventory[3] = (item_t){ITEM_SEED, 9};
+  giveItemToPlayer(&gameState.player, ITEM_PICKAXE, 1);
+  giveItemToPlayer(&gameState.player, ITEM_AXE, 1);
+  giveItemToPlayer(&gameState.player, ITEM_DIRT, 9);
+  giveItemToPlayer(&gameState.player, ITEM_GRASS, 9);
+  giveItemToPlayer(&gameState.player, ITEM_SEED, 9);
   gameState.player.selected = 0;
 
   // Create our world and load the area around the player
