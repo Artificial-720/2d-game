@@ -1,6 +1,7 @@
 #include "world.h"
 
 #include "components.h"
+#include "item.h"
 #include "physics.h"
 #include "texture.h"
 #include "ecs.h"
@@ -132,6 +133,18 @@ int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
   return 0;
 }
 
+static item_e tileToItem(tile_e tile) {
+  switch (tile) {
+    case TILE_DIRT:
+      return ITEM_DIRT;
+    case TILE_GRASS:
+      return ITEM_GRASS;
+    default:
+      assert(0);
+      return ITEM_EMPTY;
+  }
+}
+
 void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
   assert(world);
   int ix, iy;
@@ -144,17 +157,18 @@ void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
 
     if (world->tiles[index].type != TILE_EMPTY) {
       // spawn a little tile item
-      float itemx = ((float)rand() / RAND_MAX) + ix;
-      float itemy = ((float)rand() / RAND_MAX) + iy;
       unsigned int texture = getTileTextureId(world->tiles[index].type);
       entity_t item = ecsCreateEntity();
       sprite_t sprite = createSprite(ix, iy, 0.5f, 0.5f, 0, texture);
       transform_t transform = {.pos = (vec2){ix, iy}};
+      // todo do the right item
+      pickup_t pickup = {.item = tileToItem(world->tiles[index].type)};
       physics_t p = {.body = 0, .isStatic = 0};
-      p.body = createBody((vec2){itemx, itemy}, (vec2){0.5f, 0.5f});
+      p.body = createBody((vec2){ix, iy}, (vec2){0.5f, 0.5f});
       ecsAddComponent(item, SPRITE, (void*)&sprite);
       ecsAddComponent(item, TRANSFORM, (void*)&transform);
       ecsAddComponent(item, PHYSICS, (void*)&p);
+      ecsAddComponent(item, PICKUP, (void*)&pickup);
 
       // actually remove tile
       world->tiles[index].type = TILE_EMPTY;

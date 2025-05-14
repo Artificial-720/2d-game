@@ -17,6 +17,10 @@ typedef struct {
   int count;
 } item_t;
 
+typedef struct {
+  item_e item;
+} pickup_t;
+
 typedef void (*use_cb)(world_t *world, item_t *inventory, int selected, vec2 worldPos);
 
 use_cb getUseItem(item_e item);

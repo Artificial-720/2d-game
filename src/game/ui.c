@@ -1,6 +1,7 @@
 #include "ui.h"
 
 #include "ecs.h"
+#include "item.h"
 #include "texture.h"
 #include "components.h"
 #include "../platform/sprite.h"
@@ -42,10 +43,15 @@ void setupHud() {
   }
 }
 
-void drawHud(camera_t *camera, item_t *inventory, int selected, input_t *input) {
+void drawHud(player_t *player, camera_t *camera, input_t *input) {
+  item_t *inventory = player->inventory;
+  int selected = player->selected;
+
   // refresh the hud
+  // printf("=======================\n");
   for (int i = 0; i < 10; i++) {
     ui_t *ui = (ui_t*)ecsGetComponent(items[i], UI);
+    // printf("item: %d count: %d\n", inventory[i].item, inventory[i].count);
     if (inventory[i].item != ITEM_EMPTY) {
       sprite_t *sprite = (sprite_t*)ecsGetComponent(items[i], SPRITE);
       sprite->texture = getItemTextureId(inventory[i].item);
@@ -53,7 +59,10 @@ void drawHud(camera_t *camera, item_t *inventory, int selected, input_t *input) 
     } else {
       ui->enabled = 0;
     }
+    assert((inventory[i].item == ITEM_EMPTY && inventory[i].count == 0) ||
+           (inventory[i].item != ITEM_EMPTY && inventory[i].count > 0));
   }
+  // printf("=======================\n");
 
   if (previousSelected != selected) {
     previousSelected = selected;

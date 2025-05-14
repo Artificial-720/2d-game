@@ -3,6 +3,7 @@
 
 #include "item.h"
 #include "camera.h"
+#include "player.h"
 #include "../platform/input.h"
 
 typedef struct {
@@ -11,6 +12,6 @@ typedef struct {
 } ui_t;
 
 void setupHud();
-void drawHud(camera_t *camera, item_t *inventory, int selected, input_t *input);
+void drawHud(player_t *player, camera_t *camera, input_t *input);
 
 #endif

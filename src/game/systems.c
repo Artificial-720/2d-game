@@ -5,13 +5,15 @@
 #include "../platform/sprite.h"
 #include "../platform/renderer2d.h"
 #include "ecs.h"
+#include "item.h"
 #include "physics.h"
+#include "player.h"
 #include "world.h"
 
 #include <stdlib.h>
 
-void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *world, item_t *inventory, int *selected) {
-  physics_t *playerBody = (physics_t*)ecsGetComponent(player, PHYSICS);
+void inputSystem(player_t *player, camera_t *camera, world_t *world, input_t *input) {
+  physics_t *playerBody = (physics_t*)ecsGetComponent(player->entity, PHYSICS);
   vec2 velocity = getVelocity(playerBody->body);
   if (input->keyStates[KEY_A] == KEY_HELD) {
     velocity.x = -4.0f;
@@ -34,34 +36,34 @@ void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *wor
   }
 
   if (input->keyStates[KEY_1] == KEY_PRESS) {
-    *selected = 0;
+    player->selected = 0;
   } else if (input->keyStates[KEY_2] == KEY_PRESS) {
-    *selected = 1;
+    player->selected = 1;
   } else if (input->keyStates[KEY_3] == KEY_PRESS) {
-    *selected = 2;
+    player->selected = 2;
   } else if (input->keyStates[KEY_4] == KEY_PRESS) {
-    *selected = 3;
+    player->selected = 3;
   } else if (input->keyStates[KEY_5] == KEY_PRESS) {
-    *selected = 4;
+    player->selected = 4;
   } else if (input->keyStates[KEY_6] == KEY_PRESS) {
-    *selected = 5;
+    player->selected = 5;
   } else if (input->keyStates[KEY_7] == KEY_PRESS) {
-    *selected = 6;
+    player->selected = 6;
   } else if (input->keyStates[KEY_8] == KEY_PRESS) {
-    *selected = 7;
+    player->selected = 7;
   } else if (input->keyStates[KEY_9] == KEY_PRESS) {
-    *selected = 8;
+    player->selected = 8;
   } else if (input->keyStates[KEY_0] == KEY_PRESS) {
-    *selected = 9;
+    player->selected = 9;
   }
 
 
   // click input
   if (input->mouseStates[MOUSE_BUTTON_LEFT] == KEY_PRESS) {
     vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
-    use_cb use = getUseItem(inventory[*selected].item);
+    use_cb use = getUseItem(player->inventory[player->selected].item);
     if (use) {
-      use(world, inventory, *selected, (vec2){worldPos.x, worldPos.y});
+      use(world, player->inventory, player->selected, (vec2){worldPos.x, worldPos.y});
     }
   }
   // if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
@@ -122,3 +124,54 @@ void drawEntities() {
   free(entities);
 }
 
+void pickupItems(player_t *player) {
+  transform_t *transform = (transform_t*)ecsGetComponent(player->entity, TRANSFORM);
+  vec3 a = {transform->pos.x, transform->pos.y, 0};
+
+  int count = 0;
+  unsigned long sig = ecsGetSignature(TRANSFORM) | ecsGetSignature(PICKUP);
+  entity_t *entities = ecsQuery(sig, &count);
+
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    transform_t *t = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+    pickup_t *pickup = (pickup_t*)ecsGetComponent(entity, PICKUP);
+    vec3 b = {t->pos.x, t->pos.y, 0};
+
+    float dis = distance(a, b);
+    if (dis < player->pickupDis) {
+      int slot = -1;
+      // find a slot for the item
+      // check if already have the item
+      for (int j = 0; j < INVENTORY_SIZE; j++) {
+        if (player->inventory[j].item == pickup->item) {
+          slot = j;
+          break;
+        }
+      }
+      // if dont have the item find a empty slot
+      if (slot < 0) {
+        for (int j = 0; j < INVENTORY_SIZE; j++) {
+          if (player->inventory[j].item == ITEM_EMPTY) {
+            slot = j;
+            break;
+          }
+        }
+      }
+
+      if (slot < 0) {
+        // couldnt find a slot
+      } else {
+        // place into inventory
+        if (player->inventory[slot].item == ITEM_EMPTY) {
+          player->inventory[slot].item = pickup->item;
+        }
+        player->inventory[slot].count++;
+        ecsDeleteEntity(entity);
+      }
+
+    }
+  }
+
+  free(entities);
+}

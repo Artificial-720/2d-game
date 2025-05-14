@@ -8,8 +8,9 @@
 #include "../platform/input.h"
 
 void physicsSystem(double dt);
-void inputSystem(entity_t player, input_t *input, camera_t *camera, world_t *world, item_t *inventory, int *selected);
+void inputSystem(player_t *player, camera_t *camera, world_t *world, input_t *input);
 void cameraSystem(camera_t *camera, entity_t player, input_t *input);
+void pickupItems(player_t *player);
 
 void drawEntities();
 

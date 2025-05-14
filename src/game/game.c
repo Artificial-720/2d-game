@@ -1,6 +1,7 @@
 #include "game.h"
 
 #include "ecs.h"
+#include "item.h"
 #include "physics.h"
 #include "world.h"
 #include "components.h"
@@ -10,6 +11,7 @@
 #include "ui.h"
 #include "../platform/renderer2d.h"
 #include "../platform/sprite.h"
+#include "player.h"
 
 #define PLAYER_START_X 10
 #define PLAYER_START_Y 100
@@ -17,10 +19,8 @@
 
 typedef struct {
   camera_t camera;
-  entity_t player;
   world_t *world;
-  item_t inventory[40];
-  int selected;
+  player_t player;
 } gameState_t;
 
 static gameState_t gameState;
@@ -38,6 +38,9 @@ int gameInit() {
   ecsRegisterComponent(TRANSFORM, sizeof(transform_t));
   ecsRegisterComponent(PHYSICS, sizeof(physics_t));
   ecsRegisterComponent(UI, sizeof(ui_t));
+  ecsRegisterComponent(PICKUP, sizeof(pickup_t));
+
+  gameState.player.pickupDis = 1.5f;
 
   // Create our player entity
   unsigned int texture = loadTexture("assets/image.png");
@@ -49,17 +52,17 @@ int gameInit() {
   ecsAddComponent(player, SPRITE, (void*)&sprite);
   ecsAddComponent(player, TRANSFORM, (void*)&transform);
   ecsAddComponent(player, PHYSICS, (void*)&p);
-  gameState.player = player;
+  gameState.player.entity = player;
 
   // Setup UI entities
   setupHud();
 
   // populate default inventory
-  gameState.inventory[0] = (item_t){ITEM_PICKAXE, 0};
-  gameState.inventory[1] = (item_t){ITEM_DIRT, 9};
-  gameState.inventory[2] = (item_t){ITEM_GRASS, 9};
-  gameState.inventory[3] = (item_t){ITEM_SEED, 9};
-  gameState.selected = 0;
+  gameState.player.inventory[0] = (item_t){ITEM_PICKAXE, 1};
+  gameState.player.inventory[1] = (item_t){ITEM_DIRT, 9};
+  gameState.player.inventory[2] = (item_t){ITEM_GRASS, 9};
+  gameState.player.inventory[3] = (item_t){ITEM_SEED, 9};
+  gameState.player.selected = 0;
 
   // Create our world and load the area around the player
   gameState.world = worldInit(WORLD_WIDTH, WORLD_HEIGHT);
@@ -81,18 +84,21 @@ int gameFrame(double dt, input_t *input, output_t *output) {
     output->toggleFullScreen = 1;
   }
 
-  // player movement
-  inputSystem(gameState.player, input, &gameState.camera, gameState.world, gameState.inventory, &gameState.selected);
+  // player input
+  inputSystem(&gameState.player, &gameState.camera, gameState.world, input);
 
   // update physics
   physicsSystem(dt);
 
+  // pick up tiles near player
+  pickupItems(&gameState.player);
+
   // render
-  cameraSystem(&gameState.camera, gameState.player, input);
+  cameraSystem(&gameState.camera, gameState.player.entity, input);
   drawBackground(gameState.world, gameState.camera.pos.x);
   drawEntities();
   drawForeground(gameState.world, gameState.camera.pos.x);
-  drawHud(&gameState.camera, gameState.inventory, gameState.selected, input);
+  drawHud(&gameState.player, &gameState.camera, input);
 
   if (accumulated > TICK_RATE) {
     growVegetation(gameState.world);

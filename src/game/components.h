@@ -4,7 +4,7 @@
 #include "../core/math.h"
 
 enum component_id {
-  TRANSFORM, SPRITE, ANIMATION, PHYSICS, UI
+  TRANSFORM, SPRITE, PHYSICS, UI, PICKUP
 };
 
 typedef struct {
