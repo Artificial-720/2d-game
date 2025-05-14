@@ -2,6 +2,7 @@
 
 #include "ecs.h"
 #include "item.h"
+#include "assets.h"
 #include "texture.h"
 #include "components.h"
 #include "../platform/sprite.h"

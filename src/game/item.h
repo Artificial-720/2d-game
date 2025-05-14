@@ -17,6 +17,5 @@ typedef struct {
   item_e item;
 } pickup_t;
 
-unsigned int getItemTextureId(item_e item);
 
 #endif

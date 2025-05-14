@@ -3,9 +3,8 @@
 #include "components.h"
 #include "item.h"
 #include "physics.h"
-#include "texture.h"
+#include "assets.h"
 #include "ecs.h"
-#include "asset_map.h"
 #include "../platform/sprite.h"
 #include "../platform/renderer2d.h"
 
@@ -40,36 +39,6 @@ static int worldCoordsToIndex(world_t *world, int x, int y) {
   return x + world->width * y;
 }
 
-static unsigned int getTileTextureId(tile_e type) {
-  switch (type) {
-    case TILE_DIRT:
-      return getTexture(SPRITE_DIRT);
-    case TILE_GRASS:
-      return getTexture(SPRITE_GRASS);
-    case TILE_SEED:
-      return getTexture(SPRITE_SEED);
-    case TILE_WOOD:
-      return getTexture(SPRITE_WOOD);
-    case TILE_LEAVES:
-      return getTexture(SPRITE_LEAVES);
-    default:
-      assert(0);
-      return 0;
-  }
-}
-
-static int backgroundTile(tile_e type) {
-  switch (type) {
-    case TILE_SEED:
-    case TILE_WOOD:
-    case TILE_LEAVES:
-      return 1;
-    default:
-      return 0;
-  }
-  return 0;
-}
-
 world_t *worldInit(int width, int height) {
   assert(width > 0 && height > 0);
   world_t *world = (world_t*)malloc(sizeof(world_t));
@@ -101,7 +70,7 @@ void worldTerminate(world_t *world) {
 
 static int canPlaceTile(world_t *world, int x, int y, tile_e type) {
   int index = worldCoordsToIndex(world, x, y);
-  if (backgroundTile(type)) {
+  if (isBackgroundTile(type)) {
     if (world->background[index].type != TILE_EMPTY) return 0;
   } else {
     if (world->tiles[index].type != TILE_EMPTY) return 0;
@@ -125,7 +94,7 @@ int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
   if (validGridCoords(world, ix, iy)) {
     if (canPlaceTile(world, ix, iy, type)) {
       int index = worldCoordsToIndex(world, ix, iy);
-      if (backgroundTile(type)) {
+      if (isBackgroundTile(type)) {
         world->background[index].type = type;
         world->background[index].dirty = 1;
       } else {
@@ -139,26 +108,16 @@ int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
   return 0;
 }
 
-static item_e tileToItem(tile_e tile) {
-  switch (tile) {
-    case TILE_DIRT:
-      return ITEM_DIRT;
-    case TILE_GRASS:
-      return ITEM_DIRT;
-    case TILE_WOOD:
-      return ITEM_WOOD;
-    default:
-      assert(0);
-      return ITEM_EMPTY;
-  }
-}
 
 static void spawnPickupTile(tile_e type, int x, int y) {
+  item_e drop = tileDrop(type);
+  if (drop == ITEM_EMPTY) return;
+
   unsigned int texture = getTileTextureId(type);
   entity_t item = ecsCreateEntity();
   sprite_t sprite = createSprite(x, y, 0.5f, 0.5f, 0, texture);
   transform_t transform = {.pos = (vec2){x, y}};
-  pickup_t pickup = {.item = tileToItem(type)};
+  pickup_t pickup = {.item = drop};
   physics_t p = {.body = 0, .isStatic = 0};
   p.body = createBody((vec2){x, y}, (vec2){0.5f, 0.5f});
   ecsAddComponent(item, SPRITE, (void*)&sprite);
@@ -393,7 +352,7 @@ static void createTileEntityForeground(tile_t *tile, int x, int y) {
 }
 
 static void removeTileEntity(tile_t *tile) {
-  if (!backgroundTile(tile->type)) {
+  if (!isBackgroundTile(tile->type)) {
     physics_t *p = (physics_t*)ecsGetComponent(tile->entityId, PHYSICS);
     removeStaticbody(p->body);
   }
