@@ -110,7 +110,7 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   drawBackground(&gameState.camera, gameState.world);
   drawEntities(&gameState.camera);
   drawForeground(&gameState.camera, gameState.world);
-  drawHud(&gameState.player, &gameState.cameraUi, input);
+  drawHud(&gameState.player, &gameState.cameraUi);
 
   if (state == STATE_PAUSE) {
     drawPauseScreen(&gameState.cameraUi);

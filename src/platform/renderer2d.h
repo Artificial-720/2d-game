@@ -14,7 +14,6 @@ void r2dClear();
 int r2dCreateTexture(int width, int height, unsigned char *data, unsigned int *textureID);
 
 void r2dDrawSprite(camera_t *camera, sprite_t sprite);
-// void r2dDrawQuad(camera_t camera, quad_t quad);
 
 void r2dSetView(mat4 a);
 void r2dSetProjection(mat4 a);

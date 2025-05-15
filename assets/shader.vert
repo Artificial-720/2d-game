@@ -6,10 +6,10 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-uniform vec3 color;
+uniform vec4 color;
 
 out vec2 TexCoord;
-out vec3 Color;
+out vec4 Color;
 
 void main() {
   gl_Position = projection * view * model * vec4(vertex.xy, 0.0, 1.0);

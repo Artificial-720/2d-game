@@ -5,7 +5,6 @@
 #include "assets.h"
 #include "texture.h"
 #include "components.h"
-#include "../platform/sprite.h"
 #include "../platform/renderer2d.h"
 
 #include <assert.h>
@@ -44,7 +43,7 @@ void setupHud() {
   }
 }
 
-void drawHud(player_t *player, camera_t *camera, input_t *input) {
+void drawHud(player_t *player, camera_t *camera) {
   slot_t *inventory = player->inventory;
   int selected = player->selected;
 
@@ -78,13 +77,6 @@ void drawHud(player_t *player, camera_t *camera, input_t *input) {
   }
 
   // draw the hud
-  // float h = input->windowHeight;
-  // float w = input->windowWidth;
-  // mat4 proj = orthographic(0, w, h, 0, 0, 1);
-  // mat4 view = mat4Init(1.0f);
-  // r2dSetView(view);
-  // r2dSetProjection(proj);
-
   int count = 0;
   unsigned long sig = ecsGetSignature(UI) | ecsGetSignature(SPRITE);
   entity_t *entities = ecsQuery(sig, &count);
@@ -101,19 +93,21 @@ void drawHud(player_t *player, camera_t *camera, input_t *input) {
   }
 
   free(entities);
-
-  // set back to camera for world
-  // r2dSetView(camera->view);
-  // r2dSetProjection(camera->projection);
-  (void)input;
 }
 
 void drawPauseScreen(camera_t *camera) {
   // draw faded color
-  // quad_t quad = createQuad(0, 0, camera->width, camera->height, 0, 0, 0, 0.8f);
-  // r2dDrawQuad(camera, quad);
+  unsigned int t = getTexture(BLACK_TEXTURE);
+  sprite_t back = createSprite(0, 0, camera->width, -camera->height, 0.0f, t);
+  back.a = 0.5f;
+  r2dDrawSprite(camera, back);
+
   // draw pause icon
-  // todo get texture
-  sprite_t sprite = createSprite(camera->width / 2.0f,  camera->height / 2.0f, 100, 100, 0, 0);
+  float width = 100;
+  float height = 100;
+  float x = (camera->width - width) / 2.0f;
+  float y = (camera->height - height) / 2.0f;
+  unsigned int texture = getTexture(PAUSE_SCREEN);
+  sprite_t sprite = createSprite(x, y, width, -height, 0, texture);
   r2dDrawSprite(camera, sprite);
 }

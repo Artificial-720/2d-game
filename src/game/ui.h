@@ -12,8 +12,7 @@ typedef struct {
 } ui_t;
 
 void setupHud();
-void drawHud(player_t *player, camera_t *camera, input_t *input);
-
+void drawHud(player_t *player, camera_t *camera);
 void drawPauseScreen(camera_t *camera);
 
 #endif

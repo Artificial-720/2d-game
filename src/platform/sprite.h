@@ -5,6 +5,7 @@ typedef struct {
   float x, y; // position
   float width, height;
   float rotation; // in degrees
+  float r, g, b, a;
   unsigned int texture;
 } sprite_t;
 

@@ -231,7 +231,7 @@ void r2dDrawSprite(camera_t *camera, sprite_t sprite) {
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, matValue(&model));
 
   int colorLoc = glGetUniformLocation(renderer.program, "color");
-  glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
+  glUniform4f(colorLoc, sprite.r, sprite.g, sprite.b, sprite.a);
 
   int viewLoc = glGetUniformLocation(renderer.program, "view");
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, matValue(&camera->view));
@@ -253,12 +253,11 @@ void r2dSetProjection(mat4 a) {
 
 sprite_t createSprite(float x, float y, float width, float height, float rotation, unsigned int textureID) {
   sprite_t sprite = {
-    .x = x,
-    .y = y,
-    .width = width,
-    .height = height,
+    .x = x, .y = y,
+    .width = width, .height = height,
     .rotation = rotation,
-    .texture = textureID
+    .texture = textureID,
+    .r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f
   };
   return sprite;
 }

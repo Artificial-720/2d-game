@@ -160,5 +160,7 @@ void updateCameras(entity_t player, camera_t *camera, camera_t *cameraUi, input_
   cameraUpdatePosition(camera, tf->pos.x, tf->pos.y);
 
   // ui camera
+  cameraUi->width = input->windowWidth;
+  cameraUi->height = input->windowHeight;
   cameraUi->projection = orthographic(0, input->windowWidth, input->windowHeight, 0, 0, 1);
 }
