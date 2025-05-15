@@ -1,18 +1,28 @@
 #include "systems.h"
 
-#include "camera.h"
 #include "components.h"
-#include "../platform/sprite.h"
-#include "../platform/renderer2d.h"
 #include "ecs.h"
 #include "item.h"
 #include "physics.h"
 #include "player.h"
+#include "state.h"
 #include "world.h"
+#include "../platform/renderer2d.h"
 
 #include <stdlib.h>
 
-void inputSystem(player_t *player, camera_t *camera, world_t *world, input_t *input) {
+state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t *input, output_t *output) {
+  // Pause the game
+  if (input->keyStates[KEY_ESCAPE] == KEY_PRESS) {
+    return STATE_PAUSE;
+  }
+
+  // full screen toggle
+  if (input->keyStates[KEY_F] == KEY_PRESS) {
+    output->toggleFullScreen = 1;
+  }
+
+  // apply forces
   physics_t *playerBody = (physics_t*)ecsGetComponent(player->entity, PHYSICS);
   vec2 velocity = getVelocity(playerBody->body);
   if (input->keyStates[KEY_A] == KEY_HELD) {
@@ -35,6 +45,7 @@ void inputSystem(player_t *player, camera_t *camera, world_t *world, input_t *in
     }
   }
 
+  // hot bar selection
   if (input->keyStates[KEY_1] == KEY_PRESS) {
     player->selected = 0;
   } else if (input->keyStates[KEY_2] == KEY_PRESS) {
@@ -57,7 +68,6 @@ void inputSystem(player_t *player, camera_t *camera, world_t *world, input_t *in
     player->selected = 9;
   }
 
-
   // click input
   if (input->mouseStates[MOUSE_BUTTON_LEFT] == KEY_PRESS) {
     vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
@@ -66,30 +76,16 @@ void inputSystem(player_t *player, camera_t *camera, world_t *world, input_t *in
       use(world, player, (vec2){worldPos.x, worldPos.y});
     }
   }
-  // if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
-  //   vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
-  //   tile_e broken = TILE_EMPTY;
-  //   worldBreakTile(world, worldPos.x, worldPos.y, &broken);
-  // }
 
+  return STATE_PLAYING;
 }
 
-void cameraSystem(camera_t *camera, entity_t player, input_t *input) {
-  camera->width = input->windowWidth;
-  camera->height = input->windowHeight;
-  float h = 30;
-  float w = h * ((float)camera->width / camera->height);
-  camera->projection = orthographic(
-    -w / (2 * camera->zoomFactor), w / (2 * camera->zoomFactor),
-    -h / (2 * camera->zoomFactor), h / (2 * camera->zoomFactor),
-    -1, 1
-  );
-  transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
-  cameraUpdatePosition(camera, tf->pos.x, tf->pos.y);
-  r2dSetView(camera->view);
-  r2dSetProjection(camera->projection);
+state_e inputPause(input_t *input) {
+  if (input->keyStates[KEY_ESCAPE] == KEY_PRESS) {
+    return STATE_PLAYING;
+  }
+  return STATE_PAUSE;
 }
-
 
 void physicsSystem(double dt) {
   physicsStep(dt);
@@ -107,7 +103,7 @@ void physicsSystem(double dt) {
   free(entities);
 }
 
-void drawEntities() {
+void drawEntities(camera_t *camera) {
   int count = 0;
   unsigned long sig = ecsGetSignature(SPRITE) | ecsGetSignature(TRANSFORM);
   entity_t *entities = ecsQuery(sig, &count);
@@ -118,7 +114,7 @@ void drawEntities() {
     transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
     sprite->x = transform->pos.x;
     sprite->y = transform->pos.y;
-    r2dDrawSprite(*sprite);
+    r2dDrawSprite(camera, *sprite);
   }
 
   free(entities);
@@ -147,4 +143,22 @@ void pickupItems(player_t *player) {
   }
 
   free(entities);
+}
+
+void updateCameras(entity_t player, camera_t *camera, camera_t *cameraUi, input_t *input) {
+  // main world camera
+  camera->width = input->windowWidth;
+  camera->height = input->windowHeight;
+  float h = 30;
+  float w = h * ((float)camera->width / camera->height);
+  camera->projection = orthographic(
+    -w / (2 * camera->zoomFactor), w / (2 * camera->zoomFactor),
+    -h / (2 * camera->zoomFactor), h / (2 * camera->zoomFactor),
+    -1, 1
+  );
+  transform_t *tf = (transform_t*)ecsGetComponent(player, TRANSFORM);
+  cameraUpdatePosition(camera, tf->pos.x, tf->pos.y);
+
+  // ui camera
+  cameraUi->projection = orthographic(0, input->windowWidth, input->windowHeight, 0, 0, 1);
 }

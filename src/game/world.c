@@ -87,8 +87,7 @@ static int canPlaceTile(world_t *world, int x, int y, tile_e type) {
   return 1;
 }
 
-int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
-  assert(world);
+int worldPlaceTile(world_t *world, float x, float y, tile_e type) { assert(world);
   int ix, iy;
   convertToGrid(x, y, &ix, &iy);
   if (validGridCoords(world, ix, iy)) {
@@ -429,36 +428,36 @@ void refreshWorld(world_t *world, float cameraX) {
 //-----------------------------------------------------------------------------
 // Draw
 //-----------------------------------------------------------------------------
-void drawBackground(world_t *world, float cameraX) {
+void drawBackground(camera_t * camera, world_t *world) {
   sprite_t sprite = createSprite(0, 0, 1, 1, 0, 0);
   for (int i = 0; i < (world->height * world->width); i++) {
     int x, y;
     indexToWorldCoords(world, i, &x, &y);
-    if (x > cameraX - TILE_LOAD_DISTANCE && x < cameraX + TILE_LOAD_DISTANCE) {
+    if (x > camera->pos.x - TILE_LOAD_DISTANCE && x < camera->pos.x + TILE_LOAD_DISTANCE) {
       if (world->background[i].type == TILE_EMPTY) continue;
 
       sprite.x = x;
       sprite.y = y;
       sprite.texture = getTileTextureId(world->background[i].type);
 
-      r2dDrawSprite(sprite);
+      r2dDrawSprite(camera, sprite);
     }
   }
 }
 
-void drawForeground(world_t *world, float cameraX) {
+void drawForeground(camera_t *camera, world_t *world) {
   sprite_t sprite = createSprite(0, 0, 1, 1, 0, 0);
   for (int i = 0; i < (world->height * world->width); i++) {
     int x, y;
     indexToWorldCoords(world, i, &x, &y);
-    if (x > cameraX - TILE_LOAD_DISTANCE && x < cameraX + TILE_LOAD_DISTANCE) {
+    if (x > camera->pos.x - TILE_LOAD_DISTANCE && x < camera->pos.x + TILE_LOAD_DISTANCE) {
       if (world->tiles[i].type == TILE_EMPTY) continue;
 
       sprite.x = x;
       sprite.y = y;
       sprite.texture = getTileTextureId(world->tiles[i].type);
 
-      r2dDrawSprite(sprite);
+      r2dDrawSprite(camera, sprite);
     }
   }
 }

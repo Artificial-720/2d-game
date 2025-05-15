@@ -78,12 +78,12 @@ void drawHud(player_t *player, camera_t *camera, input_t *input) {
   }
 
   // draw the hud
-  float h = input->windowHeight;
-  float w = input->windowWidth;
-  mat4 proj = orthographic(0, w, h, 0, 0, 1);
-  mat4 view = mat4Init(1.0f);
-  r2dSetView(view);
-  r2dSetProjection(proj);
+  // float h = input->windowHeight;
+  // float w = input->windowWidth;
+  // mat4 proj = orthographic(0, w, h, 0, 0, 1);
+  // mat4 view = mat4Init(1.0f);
+  // r2dSetView(view);
+  // r2dSetProjection(proj);
 
   int count = 0;
   unsigned long sig = ecsGetSignature(UI) | ecsGetSignature(SPRITE);
@@ -97,12 +97,23 @@ void drawHud(player_t *player, camera_t *camera, input_t *input) {
 
     sprite->x = ui->pos.x;
     sprite->y = ui->pos.y;
-    r2dDrawSprite(*sprite);
+    r2dDrawSprite(camera, *sprite);
   }
 
   free(entities);
 
   // set back to camera for world
-  r2dSetView(camera->view);
-  r2dSetProjection(camera->projection);
+  // r2dSetView(camera->view);
+  // r2dSetProjection(camera->projection);
+  (void)input;
+}
+
+void drawPauseScreen(camera_t *camera) {
+  // draw faded color
+  // quad_t quad = createQuad(0, 0, camera->width, camera->height, 0, 0, 0, 0.8f);
+  // r2dDrawQuad(camera, quad);
+  // draw pause icon
+  // todo get texture
+  sprite_t sprite = createSprite(camera->width / 2.0f,  camera->height / 2.0f, 100, 100, 0, 0);
+  r2dDrawSprite(camera, sprite);
 }

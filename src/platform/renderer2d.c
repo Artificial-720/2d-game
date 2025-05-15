@@ -216,7 +216,7 @@ int r2dCreateTexture(int width, int height, unsigned char *data, unsigned int *t
   return 0;
 }
 
-void r2dDrawSprite(sprite_t sprite) {
+void r2dDrawSprite(camera_t *camera, sprite_t sprite) {
   if (renderer.boundTexture != sprite.texture) {
     glBindTexture(GL_TEXTURE_2D, sprite.texture);
     renderer.boundTexture = sprite.texture;
@@ -234,10 +234,10 @@ void r2dDrawSprite(sprite_t sprite) {
   glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
 
   int viewLoc = glGetUniformLocation(renderer.program, "view");
-  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, matValue(&renderer.view));
+  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, matValue(&camera->view));
 
   int projectionLoc = glGetUniformLocation(renderer.program, "projection");
-  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, matValue(&renderer.projection));
+  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, matValue(&camera->projection));
 
 
   glDrawElements(GL_TRIANGLES, renderer.indicesCount, GL_UNSIGNED_SHORT, 0);

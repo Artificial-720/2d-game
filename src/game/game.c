@@ -6,12 +6,11 @@
 #include "world.h"
 #include "components.h"
 #include "systems.h"
-#include "camera.h"
 #include "texture.h"
 #include "ui.h"
-#include "../platform/renderer2d.h"
-#include "../platform/sprite.h"
 #include "player.h"
+#include "state.h"
+#include "../platform/renderer2d.h"
 
 #define PLAYER_START_X 10
 #define PLAYER_START_Y 100
@@ -19,15 +18,18 @@
 
 typedef struct {
   camera_t camera;
+  camera_t cameraUi;
   world_t *world;
   player_t player;
 } gameState_t;
 
 static gameState_t gameState;
 static double accumulated;
+static state_e state;
 
 int gameInit() {
   accumulated = 0.0f;
+  state = STATE_PLAYING;
   // Set sky color
   r2dSetClearColorRGBA(130.0f, 190.0f, 253.0f, 1.0f);
 
@@ -73,39 +75,46 @@ int gameInit() {
 
   // Setup Camera
   gameState.camera = cameraInit();
+  gameState.cameraUi = cameraInit();
 
   return 0;
 }
 
 int gameFrame(double dt, input_t *input, output_t *output) {
-  accumulated += dt;
-
-  // full screen toggle
-  if (input->keyStates[KEY_F] == KEY_PRESS) {
-    output->toggleFullScreen = 1;
+  // player input
+  switch (state) {
+    case STATE_PLAYING:
+      state = inputPlaying(&gameState.player, &gameState.camera, gameState.world, input, output);
+      break;
+    case STATE_PAUSE:
+      state = inputPause(input);
+      break;
   }
 
-  // player input
-  inputSystem(&gameState.player, &gameState.camera, gameState.world, input);
+  if (state == STATE_PLAYING) {
+    // update physics
+    physicsSystem(dt);
+    // pick up tiles near player
+    pickupItems(&gameState.player);
 
-  // update physics
-  physicsSystem(dt);
-
-  // pick up tiles near player
-  pickupItems(&gameState.player);
+    accumulated += dt;
+    if (accumulated > TICK_RATE) {
+      growVegetation(gameState.world);
+      accumulated -= TICK_RATE;
+    }
+    refreshWorld(gameState.world, gameState.camera.pos.x);
+  }
 
   // render
-  cameraSystem(&gameState.camera, gameState.player.entity, input);
-  drawBackground(gameState.world, gameState.camera.pos.x);
-  drawEntities();
-  drawForeground(gameState.world, gameState.camera.pos.x);
-  drawHud(&gameState.player, &gameState.camera, input);
+  updateCameras(gameState.player.entity, &gameState.camera, &gameState.cameraUi, input);
+  drawBackground(&gameState.camera, gameState.world);
+  drawEntities(&gameState.camera);
+  drawForeground(&gameState.camera, gameState.world);
+  drawHud(&gameState.player, &gameState.cameraUi, input);
 
-  if (accumulated > TICK_RATE) {
-    growVegetation(gameState.world);
-    accumulated -= TICK_RATE;
+  if (state == STATE_PAUSE) {
+    drawPauseScreen(&gameState.cameraUi);
   }
-  refreshWorld(gameState.world, gameState.camera.pos.x);
 
   return 0;
 }

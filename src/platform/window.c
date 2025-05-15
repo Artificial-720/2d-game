@@ -135,6 +135,7 @@ void pollInput(window_t *window, input_t *input) {
   }
 
   input->keyStates[KEY_SPACE] = getKey(window, GLFW_KEY_SPACE);
+  input->keyStates[KEY_ESCAPE] = getKey(window, GLFW_KEY_ESCAPE);
 
   // mouse
   double mouseX, mouseY;

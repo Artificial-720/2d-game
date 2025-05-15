@@ -2,8 +2,8 @@
 #define UI_H
 
 #include "item.h"
-#include "camera.h"
 #include "player.h"
+#include "../platform/camera.h"
 #include "../platform/input.h"
 
 typedef struct {
@@ -13,5 +13,7 @@ typedef struct {
 
 void setupHud();
 void drawHud(player_t *player, camera_t *camera, input_t *input);
+
+void drawPauseScreen(camera_t *camera);
 
 #endif

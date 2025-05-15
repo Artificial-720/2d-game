@@ -1,6 +1,8 @@
 #ifndef WORLD_H
 #define WORLD_H
 
+#include "../platform/camera.h"
+
 // #define WORLD_WIDTH 8400
 // #define WORLD_HEIGHT 2400
 #define WORLD_WIDTH 15
@@ -36,7 +38,7 @@ void growVegetation(world_t *world);
 
 void refreshWorld(world_t *world, float cameraX);
 
-void drawBackground(world_t *world, float cameraX);
-void drawForeground(world_t *world, float cameraX);
+void drawBackground(camera_t * camera, world_t *world);
+void drawForeground(camera_t *camera, world_t *world);
 
 #endif
