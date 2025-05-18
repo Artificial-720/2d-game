@@ -66,6 +66,27 @@ unsigned int getItemTextureId(item_e item) {
 }
 
 unsigned int getNumberTextureId(int n) {
-  (void)n;
+  switch (n) {
+    case 0:
+      return getTexture("assets/numbers/Number0 7x10.png");
+    case 1:
+      return getTexture("assets/numbers/Number1 7x10.png");
+    case 2:
+      return getTexture("assets/numbers/Number2 7x10.png");
+    case 3:
+      return getTexture("assets/numbers/Number3 7x10.png");
+    case 4:
+      return getTexture("assets/numbers/Number4 7x10.png");
+    case 5:
+      return getTexture("assets/numbers/Number5 7x10.png");
+    case 6:
+      return getTexture("assets/numbers/Number6 7x10.png");
+    case 7:
+      return getTexture("assets/numbers/Number7 7x10.png");
+    case 8:
+      return getTexture("assets/numbers/Number8 7x10.png");
+    case 9:
+      return getTexture("assets/numbers/Number9 7x10.png");
+  }
   return 0;
 }
