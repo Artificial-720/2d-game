@@ -118,6 +118,10 @@ double getTime() {
   return glfwGetTime();
 }
 
+void windowSetTitle(window_t *window, const char *title) {
+  glfwSetWindowTitle(window, title);
+}
+
 void processGameOutput(window_t *window, output_t *output) {
   if (output->toggleFullScreen) {
     toggleFullScreen(window);

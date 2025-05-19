@@ -13,6 +13,7 @@ window_t *windowInit(int width, int height, const char *title);
 void windowTerminate(window_t *window);
 int windowShouldClose(window_t *window);
 void windowSwapBuffers(window_t *window);
+void windowSetTitle(window_t *window, const char *title);
 
 /*
 * return is if width or height changed from value in width or height
