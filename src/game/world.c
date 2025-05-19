@@ -147,35 +147,66 @@ void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
   assert(world);
   int ix, iy;
   convertToGrid(x, y, &ix, &iy);
-  if (validGridCoords(world, ix, iy)) {
-    int index = worldCoordsToIndex(world, ix, iy);
-    if (broken) {
-      *broken = world->tiles[index].type;
-    }
+  if (!validGridCoords(world, ix, iy)) return;
 
-    if (world->tiles[index].type != TILE_EMPTY) {
-      spawnPickupTile(world->tiles[index].type, ix, iy);
-
-      // actually remove tile
-      world->tiles[index].type = TILE_EMPTY;
-      world->tiles[index].dirty = 1;
-    }
+  int index = worldCoordsToIndex(world, ix, iy);
+  if (broken) {
+    *broken = world->tiles[index].type;
   }
+
+  if (world->tiles[index].type == TILE_EMPTY) return;
+
+  spawnPickupTile(world->tiles[index].type, ix, iy);
+  // actually remove tile
+  world->tiles[index].type = TILE_EMPTY;
+  world->tiles[index].dirty = 1;
 }
 
 void worldBreakTileBackground(world_t *world, float x, float y) {
   assert(world);
   int ix, iy;
   convertToGrid(x, y, &ix, &iy);
-  if (validGridCoords(world, ix, iy)) {
-    int index = worldCoordsToIndex(world, ix, iy);
-    if (world->background[index].type != TILE_EMPTY) {
-      spawnPickupTile(world->background[index].type, ix, iy);
+  if (!validGridCoords(world, ix, iy)) return;
 
-      // actually remove tile
-      world->background[index].type = TILE_EMPTY;
-      world->background[index].dirty = 1;
+  int index = worldCoordsToIndex(world, ix, iy);
+  if (world->background[index].type == TILE_EMPTY) return;
+
+  if (world->background[index].type == TILE_WOOD) {
+    // remove all the wood above and leaves
+    for (int i = 0; i < TREE_MAX_HEIGHT; i++) {
+      printf("checking %d\n",i);
+      if (validGridCoords(world, ix, iy + i)) {
+        int subIndex = worldCoordsToIndex(world, ix, iy + i);
+        if (world->background[subIndex].type == TILE_WOOD ||
+            world->background[subIndex].type == TILE_LEAVES) {
+          spawnPickupTile(world->background[subIndex].type, ix, iy + i);
+          // actually remove tile
+          world->background[subIndex].type = TILE_EMPTY;
+          world->background[subIndex].dirty = 1;
+        }
+        // check for leaves
+        if (validGridCoords(world, ix + 1, iy + i)) {
+          int rightIndex = worldCoordsToIndex(world, ix + 1, iy + i);
+          if (world->background[rightIndex].type == TILE_LEAVES) {
+          world->background[rightIndex].type = TILE_EMPTY;
+          world->background[rightIndex].dirty = 1;
+          }
+        }
+        if (validGridCoords(world, ix - 1, iy + i)) {
+          int leftIndex = worldCoordsToIndex(world, ix - 1, iy + i);
+          if (world->background[leftIndex].type == TILE_LEAVES) {
+          world->background[leftIndex].type = TILE_EMPTY;
+          world->background[leftIndex].dirty = 1;
+          }
+        }
+
+      }
     }
+  } else {
+    spawnPickupTile(world->background[index].type, ix, iy);
+    // actually remove tile
+    world->background[index].type = TILE_EMPTY;
+    world->background[index].dirty = 1;
   }
 }
 
