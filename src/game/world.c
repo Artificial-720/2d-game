@@ -5,6 +5,7 @@
 #include "physics.h"
 #include "assets.h"
 #include "ecs.h"
+#include "../core/noise.h"
 #include "../platform/sprite.h"
 #include "../platform/renderer2d.h"
 
@@ -212,18 +213,105 @@ void worldBreakTileBackground(world_t *world, float x, float y) {
 
 void worldGenerate(world_t *world, int seed) {
   assert(world);
-  int surfaceLevel = 5;
-
-  // 1. flat ground
+  int surfaceLevel = 70;
+  float noiseScale = 0.1f;
+  int maxHill = 5; // offset from surface level
+  double caveChance = 0.5f;
+  double oreChance = 0.6f;
+  double seedChance = 0.5f;
   tile_t empty = {.entityId = 0, .type = TILE_EMPTY, .loaded = 0};
   tile_t dirt = {.entityId = 0, .type = TILE_DIRT, .loaded = 0};
+  tile_t stone = {.entityId = 0, .type = TILE_STONE, .loaded = 0};
+  // tile_t grass = {.entityId = 0, .type = TILE_GRASS, .loaded = 0};
+
+
+  // 1. flat ground
   for (int i = 0; i < (world->width * world->height); i++) {
     int x, y;
     indexToWorldCoords(world, i, &x, &y);
     world->tiles[i] = (y < surfaceLevel) ? dirt : empty;
   }
 
-  (void)seed;
+  // 1. Generating height
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    double height = perlin(x * noiseScale, surfaceLevel * noiseScale);
+    int offset = maxHill * height;
+
+    for (int y = 0; y < WORLD_HEIGHT; y++) {
+      int index = worldCoordsToIndex(world, x, y);
+      int surface = surfaceLevel + offset;
+      if (y < surface) {
+        world->tiles[index] = stone;
+      } else {
+        world->tiles[index] = empty;
+      }
+    }
+  }
+
+  // 2. Generating caves
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    for (int y = 0; y < WORLD_HEIGHT; y++) {
+      int index = worldCoordsToIndex(world, x, y);
+      if (world->tiles[index].type == TILE_STONE) {
+        double chance = perlin(x * noiseScale, y * noiseScale);
+        if (chance > caveChance) {
+          world->tiles[index] = empty;
+        }
+      }
+    }
+  }
+
+  // 3. Filling with ore
+  noiseScale += 0.1f;
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    for (int y = 0; y < WORLD_HEIGHT; y++) {
+      int index = worldCoordsToIndex(world, x, y);
+      if (world->tiles[index].type == TILE_STONE) {
+        double chance = perlin(x * noiseScale, y * noiseScale);
+        if (chance > oreChance) {
+          world->tiles[index].type = TILE_IRON;
+        }
+      }
+    }
+  }
+
+  // 4. Surface replacement
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    int count = 0;
+    for (int y = WORLD_HEIGHT - 1; y > 0; y--) {
+      if (count > 10) break;
+      int index = worldCoordsToIndex(world, x, y);
+
+      if (world->tiles[index].type == TILE_EMPTY) continue;
+
+      if (world->tiles[index].type == TILE_STONE) {
+        if (count == 0) {
+          world->tiles[index].type = TILE_GRASS;
+        } else {
+          world->tiles[index].type = TILE_DIRT;
+        }
+        count++;
+      }
+    }
+  }
+
+  // 5. Planing trees
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    for (int y = WORLD_HEIGHT - 1; y > 0; y--) {
+      int index = worldCoordsToIndex(world, x, y);
+      if (world->tiles[index].type != TILE_GRASS) continue;
+
+      double chance = perlin(x * noiseScale, y * noiseScale);
+      if (chance > seedChance) {
+        if (validGridCoords(world, x, y + 1)) {
+          int subIndex = worldCoordsToIndex(world, x, y + 1);
+          world->background[subIndex].type = TILE_SEED;
+        }
+      }
+    }
+  }
+
+  (void)seed; // TODO
 }
 
 //-----------------------------------------------------------------------------

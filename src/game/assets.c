@@ -6,6 +6,8 @@
 #define SPRITE_WOOD "assets/tiles/trunk_side.png"
 #define SPRITE_LEAVES "assets/tiles/leaves.png"
 
+#include <stdio.h>
+
 unsigned int getTileTextureId(tile_e type) {
   switch (type) {
     case TILE_DIRT:
@@ -20,7 +22,12 @@ unsigned int getTileTextureId(tile_e type) {
       return getTexture(SPRITE_LEAVES);
     case TILE_DOOR:
       return getTexture("assets/greysand.png");
+    case TILE_STONE:
+      return getTexture("assets/tiles/stone.png");
+    case TILE_IRON:
+      return getTexture("assets/tiles/stone_browniron.png");
     default:
+      printf("warning: missing tile texture for %d\n", type);
       return getTexture(MISSING_TEXTURE);
   }
 }
