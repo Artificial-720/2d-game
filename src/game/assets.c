@@ -18,6 +18,8 @@ unsigned int getTileTextureId(tile_e type) {
       return getTexture(SPRITE_WOOD);
     case TILE_LEAVES:
       return getTexture(SPRITE_LEAVES);
+    case TILE_DOOR:
+      return getTexture("assets/greysand.png");
     default:
       return getTexture(MISSING_TEXTURE);
   }

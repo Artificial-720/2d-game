@@ -65,6 +65,7 @@ int gameInit() {
   giveItemToPlayer(&gameState.player, ITEM_DIRT, 9);
   giveItemToPlayer(&gameState.player, ITEM_GRASS, 9);
   giveItemToPlayer(&gameState.player, ITEM_SEED, 9);
+  giveItemToPlayer(&gameState.player, ITEM_DOOR, 5);
   gameState.player.selected = 0;
 
   // Create our world and load the area around the player

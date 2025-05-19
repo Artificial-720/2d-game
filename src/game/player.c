@@ -3,6 +3,7 @@
 #include "world.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 
 static tile_e getTileFromItem(item_e item) {
@@ -13,7 +14,10 @@ static tile_e getTileFromItem(item_e item) {
       return TILE_GRASS;
     case ITEM_SEED:
       return TILE_SEED;
+    case ITEM_DOOR:
+      return TILE_DOOR;
     default:
+      printf("warning: missing get tile from item\n");
       return 0;
   }
 }
@@ -50,6 +54,7 @@ use_cb getUseItem(item_e item) {
     case ITEM_DIRT:
     case ITEM_GRASS:
     case ITEM_SEED:
+    case ITEM_DOOR:
       return placeBlock;
     case ITEM_PICKAXE:
       return breakBlockForeground;

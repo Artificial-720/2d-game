@@ -9,6 +9,7 @@
 #include "world.h"
 #include "../platform/renderer2d.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t *input, output_t *output) {
@@ -76,6 +77,14 @@ state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t
       use(world, player, (vec2){worldPos.x, worldPos.y});
     }
   }
+  if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
+    vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
+    tile_e underMouse = getTileAt(world, worldPos.x, worldPos.y);
+    if (underMouse == TILE_DOOR) {
+      printf("door\n");
+    }
+  }
+
 
   return STATE_PLAYING;
 }

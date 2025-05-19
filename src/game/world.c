@@ -8,6 +8,7 @@
 #include "../platform/sprite.h"
 #include "../platform/renderer2d.h"
 
+#include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
 
@@ -37,6 +38,12 @@ static void indexToWorldCoords(world_t *world, int index, int *x, int *y) {
 
 static int worldCoordsToIndex(world_t *world, int x, int y) {
   return x + world->width * y;
+}
+
+tile_e getTileAt(world_t *world, float x, float y) {
+  int ix, iy;
+  convertToGrid(x, y, &ix, &iy);
+  return world->tiles[worldCoordsToIndex(world, ix, iy)].type;
 }
 
 world_t *worldInit(int width, int height) {
@@ -84,10 +91,20 @@ static int canPlaceTile(world_t *world, int x, int y, tile_e type) {
     return 0;
   }
 
+  if (type == TILE_DOOR) {
+    if (validGridCoords(world, x, y - 1)) {
+      int other = worldCoordsToIndex(world, x, y - 1);
+      return (world->tiles[other].type == TILE_GRASS) ? 1 : 0;
+    }
+    return 0;
+  }
+
   return 1;
 }
 
-int worldPlaceTile(world_t *world, float x, float y, tile_e type) { assert(world);
+int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
+  printf("placing tile with type: %d\n", type);
+  assert(world);
   int ix, iy;
   convertToGrid(x, y, &ix, &iy);
   if (validGridCoords(world, ix, iy)) {
@@ -97,6 +114,7 @@ int worldPlaceTile(world_t *world, float x, float y, tile_e type) { assert(world
         world->background[index].type = type;
         world->background[index].dirty = 1;
       } else {
+        printf("placing tile\n");
         world->tiles[index].type = type;
         world->tiles[index].dirty = 1;
       }
@@ -453,9 +471,15 @@ void drawForeground(camera_t *camera, world_t *world) {
     if (x > camera->pos.x - TILE_LOAD_DISTANCE && x < camera->pos.x + TILE_LOAD_DISTANCE) {
       if (world->tiles[i].type == TILE_EMPTY) continue;
 
+      sprite.height = 1;
       sprite.x = x;
       sprite.y = y;
       sprite.texture = getTileTextureId(world->tiles[i].type);
+
+      if (world->tiles[i].type == TILE_DOOR) {
+        sprite.height = 2;
+        sprite.y += 1;
+      }
 
       r2dDrawSprite(camera, sprite);
     }

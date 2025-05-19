@@ -10,7 +10,8 @@
 #define TILE_LOAD_DISTANCE 20
 
 typedef enum {
-  TILE_EMPTY, TILE_DIRT, TILE_GRASS, TILE_SEED, TILE_WOOD, TILE_LEAVES
+  TILE_EMPTY, TILE_DIRT, TILE_GRASS, TILE_SEED, TILE_WOOD, TILE_LEAVES,
+  TILE_DOOR, TILE_DOOR_CLOSE
 } tile_e;
 
 typedef struct {
@@ -40,5 +41,7 @@ void refreshWorld(world_t *world, float cameraX);
 
 void drawBackground(camera_t * camera, world_t *world);
 void drawForeground(camera_t *camera, world_t *world);
+
+tile_e getTileAt(world_t *world, float x, float y);
 
 #endif

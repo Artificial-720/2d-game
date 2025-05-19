@@ -11,6 +11,7 @@ typedef enum {
   ITEM_WOOD,
   ITEM_PICKAXE,
   ITEM_AXE,
+  ITEM_DOOR,
 } item_e;
 
 typedef struct {
