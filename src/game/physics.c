@@ -16,6 +16,7 @@ typedef struct {
   vec2 pos;
   vec2 size;
   rigidbody_t rb;
+  int grounded;
 } body_t;
 
 typedef struct {
@@ -116,6 +117,10 @@ void applyForce(unsigned int id, vec2 force) {
   bodies[id].rb.force = vec2Add(bodies[id].rb.force, force);
 }
 
+int onGround(unsigned int id) {
+  return bodies[id].grounded;
+}
+
 int pointInsideQuad(vec2 pos, vec2 size, vec2 point) {
   if (point.x >= pos.x && point.x <= pos.x + size.x &&
       point.y <= pos.y && point.y >= pos.y - size.y) {
@@ -161,6 +166,7 @@ void physicsStep(double dt) {
 
     int collisionCount = 0;
     collision_t collisions[MAX_COLLISIONS] = {0};
+    bodies[i].grounded = 0;
     // printf("player pos: %f %f\n", bodies[i].pos.x, bodies[i].pos.y);
     for (unsigned int j = 0; j < staticCount; j++) {
       // printf("static pos: %f %f, size: %f %f\n", staticBodies[j].pos.x,staticBodies[j].pos.y,staticBodies[j].size.x,staticBodies[j].size.y);
@@ -218,8 +224,8 @@ void physicsStep(double dt) {
       }
       if (dir.y) {
         bodies[i].rb.velocity.y = 0;
+        bodies[i].grounded = 1;
       }
-
 
 
 

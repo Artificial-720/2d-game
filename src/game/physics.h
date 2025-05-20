@@ -21,5 +21,6 @@ void applyForce(unsigned int id, vec2 force);
 vec2 getPosition(unsigned int id);
 vec2 getVelocity(unsigned int id);
 void setVelocity(unsigned int id, vec2 v);
+int onGround(unsigned int id);
 
 #endif

@@ -41,7 +41,7 @@ state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t
   setVelocity(playerBody->body, velocity);
 
   if (input->keyStates[KEY_SPACE] == KEY_HELD) {
-    if (velocity.y < 0.1f) {
+    if (onGround(playerBody->body)) {
       applyForce(playerBody->body, (vec2){0.0f, 800.0f});
     }
   }
