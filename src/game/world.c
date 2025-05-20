@@ -131,7 +131,7 @@ static void spawnPickupTile(tile_e type, int x, int y) {
   item_e drop = tileDrop(type);
   if (drop == ITEM_EMPTY) return;
 
-  unsigned int texture = getTileTextureId(type);
+  unsigned int texture = getItemTextureId(drop);
   entity_t item = ecsCreateEntity();
   sprite_t sprite = createSprite(x, y, 0.5f, 0.5f, 0, texture);
   transform_t transform = {.pos = (vec2){x, y}};
@@ -175,7 +175,6 @@ void worldBreakTileBackground(world_t *world, float x, float y) {
   if (world->background[index].type == TILE_WOOD) {
     // remove all the wood above and leaves
     for (int i = 0; i < TREE_MAX_HEIGHT; i++) {
-      printf("checking %d\n",i);
       if (validGridCoords(world, ix, iy + i)) {
         int subIndex = worldCoordsToIndex(world, ix, iy + i);
         if (world->background[subIndex].type == TILE_WOOD ||

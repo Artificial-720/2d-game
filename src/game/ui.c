@@ -52,7 +52,9 @@ void drawHud(player_t *player, camera_t *camera) {
 
   // refresh saved data to match inventory data
   for (int i = 0; i < 10; i++) {
-    items[i].texture = getItemTextureId(inventory[i].item);
+    if (inventory[i].item != ITEM_EMPTY) {
+      items[i].texture = getItemTextureId(inventory[i].item);
+    }
   }
 
   // update selected

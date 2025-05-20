@@ -1,12 +1,12 @@
 #include "assets.h"
 
+#include <stdio.h>
+
 #define SPRITE_DIRT "assets/tiles/dirt.png"
 #define SPRITE_GRASS "assets/tiles/dirt_grass.png"
 #define SPRITE_SEED "assets/tiles/grass1.png"
 #define SPRITE_WOOD "assets/tiles/trunk_side.png"
 #define SPRITE_LEAVES "assets/tiles/leaves.png"
-
-#include <stdio.h>
 
 unsigned int getTileTextureId(tile_e type) {
   switch (type) {
@@ -47,12 +47,12 @@ int isBackgroundTile(tile_e type) {
 item_e tileDrop(tile_e tile) {
   switch (tile) {
     case TILE_DIRT:
-      return ITEM_DIRT;
     case TILE_GRASS:
       return ITEM_DIRT;
     case TILE_WOOD:
       return ITEM_WOOD;
     default:
+      printf("warning: missing tile drop for tile: %d\n", tile);
       return ITEM_EMPTY;
   }
 }
@@ -69,7 +69,10 @@ unsigned int getItemTextureId(item_e item) {
       return getTexture("assets/tiles/dirt_grass.png");
     case ITEM_SEED:
       return getTexture("assets/Items/seed.png");
+    case ITEM_WOOD:
+      return getTexture("assets/tiles/wood.png");
     default:
+      printf("warning: missing item texture for item: %d\n", item);
       return getTexture(MISSING_TEXTURE);
   }
 }
