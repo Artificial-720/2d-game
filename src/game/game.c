@@ -41,19 +41,27 @@ int gameInit() {
   ecsRegisterComponent(PHYSICS, sizeof(physics_t));
   ecsRegisterComponent(UI, sizeof(ui_t));
   ecsRegisterComponent(PICKUP, sizeof(pickup_t));
+  ecsRegisterComponent(ANIMATION, sizeof(animation_t));
 
-  gameState.player.pickupDis = 1.5f;
+  gameState.player.pickupDis = 3.0f;
 
   // Create our player entity
   unsigned int texture = loadTexture("assets/image.png");
   entity_t player = ecsCreateEntity();
-  sprite_t sprite = createSprite(10, 10, 1, 1, 0, texture);
+  sprite_t sprite = createSprite(10, 10, 1.5, 3, 0, texture);
   transform_t transform = {.pos = (vec2){10, 10}};
   physics_t p = {.body = 0, .isStatic = 0};
-  p.body = createBody((vec2){PLAYER_START_X, PLAYER_START_Y}, (vec2){1.0f, 1.0f});
+  p.body = createBody((vec2){PLAYER_START_X, PLAYER_START_Y}, (vec2){1.5f, 3.0f});
+  animation_t animation = {0};
+  animation.frameTime = 0.5f;
+  animation.frames[0] = loadTexture("assets/player1.png");
+  animation.frames[1] = loadTexture("assets/player2.png");
+  animation.frames[2] = loadTexture("assets/player3.png");
+  animation.totalFrames = 3;
   ecsAddComponent(player, SPRITE, (void*)&sprite);
   ecsAddComponent(player, TRANSFORM, (void*)&transform);
   ecsAddComponent(player, PHYSICS, (void*)&p);
+  ecsAddComponent(player, ANIMATION, (void*)&animation);
   gameState.player.entity = player;
 
   // Setup UI entities
@@ -104,6 +112,8 @@ int gameFrame(double dt, input_t *input, output_t *output) {
       accumulated -= TICK_RATE;
     }
     refreshWorld(gameState.world, gameState.camera.pos.x);
+
+    animationSystem(dt);
   }
 
   // render

@@ -12,6 +12,7 @@
 void physicsSystem(double dt);
 void pickupItems(player_t *player);
 void updateCameras(entity_t player, camera_t *camera, camera_t *cameraUi, input_t *input);
+void animationSystem(double dt);
 
 state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t *input, output_t *output);
 state_e inputPause(input_t *input);

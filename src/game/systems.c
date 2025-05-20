@@ -96,6 +96,30 @@ state_e inputPause(input_t *input) {
   return STATE_PAUSE;
 }
 
+void animationSystem(double dt) {
+  int count = 0;
+  unsigned long sig = ecsGetSignature(SPRITE) | ecsGetSignature(ANIMATION);
+  entity_t *entities = ecsQuery(sig, &count);
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    animation_t *animation = (animation_t*)ecsGetComponent(entity, ANIMATION);
+    sprite_t *sprite = (sprite_t*)ecsGetComponent(entity, SPRITE);
+
+    animation->accumulatedTime += dt;
+    if (animation->accumulatedTime > animation->frameTime) {
+      animation->accumulatedTime = 0.0f;
+      animation->frame++;
+      if (animation->frame == animation->totalFrames) {
+        animation->frame = 0;
+      }
+      sprite->texture = animation->frames[animation->frame];
+    }
+
+  }
+  free(entities);
+}
+
+
 void physicsSystem(double dt) {
   physicsStep(dt);
   // need to copy transforms out of physics
