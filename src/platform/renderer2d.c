@@ -240,6 +240,19 @@ void r2dDrawSprite(camera_t *camera, sprite_t sprite) {
   int projectionLoc = glGetUniformLocation(renderer.program, "projection");
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, matValue(&camera->projection));
 
+  float minX = sprite.subX;
+  float maxX = sprite.subX + sprite.subWidth;
+  float minY = sprite.subY;
+  float maxY = sprite.subY + sprite.subHeight;
+  // sub the vertex data
+  float verticies[] = {
+     0.0f,  0.0f,  minX, maxY,  // top left
+     1.0f,  0.0f,  maxX, maxY,  // top right
+     0.0f, -1.0f,  minX, minY,  // bottom left
+     1.0f, -1.0f,  maxX, minY   // bottom right
+  };
+  glBindVertexArray(renderer.vao);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verticies), (void*)verticies);
 
   glDrawElements(GL_TRIANGLES, renderer.indicesCount, GL_UNSIGNED_SHORT, 0);
 }
@@ -258,7 +271,8 @@ sprite_t createSprite(float x, float y, float width, float height, float rotatio
     .width = width, .height = height,
     .rotation = rotation,
     .texture = textureID,
-    .r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f
+    .r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f,
+    .subX = 0.0f, .subY = 0.0f, .subWidth = 1.0f, .subHeight = 1.0f
   };
   return sprite;
 }

@@ -1,6 +1,7 @@
 #ifndef COMPONENTS_H
 #define COMPONENTS_H
 
+#include "texture.h"
 #include "../core/math.h"
 
 enum component_id {
@@ -21,7 +22,8 @@ typedef struct {
   double accumulatedTime;
   int totalFrames;
   int frame;
-  unsigned int frames[10];
+  texture_t texture;
+  vec4 frames[10];
 } animation_t;
 
 

@@ -7,6 +7,8 @@ typedef struct {
   float rotation; // in degrees
   float r, g, b, a;
   unsigned int texture;
+  float subX, subY;
+  float subWidth, subHeight;
 } sprite_t;
 
 sprite_t createSprite(float x, float y, float width, float height, float rotation, unsigned int textureID);

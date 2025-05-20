@@ -46,7 +46,7 @@ int gameInit() {
   gameState.player.pickupDis = 3.0f;
 
   // Create our player entity
-  unsigned int texture = loadTexture("assets/image.png");
+  unsigned int texture = loadTexture("assets/image.png").id;
   entity_t player = ecsCreateEntity();
   sprite_t sprite = createSprite(10, 10, 1.5, 3, 0, texture);
   transform_t transform = {.pos = (vec2){10, 10}};
@@ -54,10 +54,11 @@ int gameInit() {
   p.body = createBody((vec2){PLAYER_START_X, PLAYER_START_Y}, (vec2){1.5f, 3.0f});
   animation_t animation = {0};
   animation.frameTime = 0.5f;
-  animation.frames[0] = loadTexture("assets/player1.png");
-  animation.frames[1] = loadTexture("assets/player2.png");
-  animation.frames[2] = loadTexture("assets/player3.png");
-  animation.totalFrames = 3;
+  animation.texture = loadTexture("assets/player.png");
+  for (int i = 0; i < 7; i++) {
+    animation.frames[i] = (vec4){(32 * i), 576, 32, 48};
+  }
+  animation.totalFrames = 7;
   ecsAddComponent(player, SPRITE, (void*)&sprite);
   ecsAddComponent(player, TRANSFORM, (void*)&transform);
   ecsAddComponent(player, PHYSICS, (void*)&p);

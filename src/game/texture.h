@@ -1,7 +1,11 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-unsigned int loadTexture(const char *path);
-unsigned int getTexture(const char *path);
+typedef struct {
+  unsigned int id;
+  int width, height;
+} texture_t;
+
+texture_t loadTexture(const char *path);
 
 #endif

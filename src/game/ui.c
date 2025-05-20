@@ -28,7 +28,7 @@ static int convertToDecimal(int count, int *high, int *low) {
 void setupHud() {
   int size = 35;
   int itemSize = size - 5;
-  unsigned int textureBar = loadTexture("assets/tile_0003.png");
+  unsigned int textureBar = loadTexture("assets/tile_0003.png").id;
   for (int i = 0; i < 10; i++) {
     // create inventory slots
     boxes[i] = createSprite(10 + ((size + 2) * i), 10.0f, size, -size, 0, textureBar);
@@ -62,9 +62,9 @@ void drawHud(player_t *player, camera_t *camera) {
     previousSelected = selected;
     for (int i = 0; i < 10; i++) {
       if (i == selected) {
-        boxes[i].texture = getTexture("assets/tile_0022.png");
+        boxes[i].texture = loadTexture("assets/tile_0022.png").id;
       } else {
-        boxes[i].texture = getTexture("assets/tile_0003.png");
+        boxes[i].texture = loadTexture("assets/tile_0003.png").id;
       }
     }
   }
@@ -96,7 +96,7 @@ void drawHud(player_t *player, camera_t *camera) {
 
 void drawPauseScreen(camera_t *camera) {
   // draw faded color
-  unsigned int t = getTexture(BLACK_TEXTURE);
+  unsigned int t = loadTexture(BLACK_TEXTURE).id;
   sprite_t back = createSprite(0, 0, camera->width, -camera->height, 0.0f, t);
   back.a = 0.5f;
   r2dDrawSprite(camera, back);
@@ -106,7 +106,7 @@ void drawPauseScreen(camera_t *camera) {
   float height = 100;
   float x = (camera->width - width) / 2.0f;
   float y = (camera->height - height) / 2.0f;
-  unsigned int texture = getTexture(PAUSE_SCREEN);
+  unsigned int texture = loadTexture(PAUSE_SCREEN).id;
   sprite_t sprite = createSprite(x, y, width, -height, 0, texture);
   r2dDrawSprite(camera, sprite);
 }

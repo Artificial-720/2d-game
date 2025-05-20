@@ -11,13 +11,13 @@
 
 typedef struct {
   int filled;
-  unsigned int id;
+  texture_t texture;
   char path[MAX_PATH];
-} texture_t;
+} textureSlot_t;
 
-static texture_t textures[MAX_TEXTURES];
+static textureSlot_t textures[MAX_TEXTURES];
 
-static unsigned int findTexture (const char *path) {
+static int findTexture(const char *path) {
   for (int i = 0; i < MAX_TEXTURES; i++) {
     if (!textures[i].filled) continue;
 
@@ -33,39 +33,47 @@ static unsigned int findTexture (const char *path) {
     }
 
     if (equal) {
-      return textures[i].id;
+      return i;
     }
   }
-  return 0;
+  return -1;
 }
 
-unsigned int loadTexture(const char *path) {
-  unsigned int id = findTexture(path);
-  if (id) {
+texture_t loadTexture(const char *path) {
+  int index = findTexture(path);
+  if (index >= 0) {
     // already loaded
-    return id;
+    return textures[index].texture;
   }
 
   // load file
   stbi_set_flip_vertically_on_load(1);
   int width, height, nrChannels;
   unsigned char *data = stbi_load(path, &width, &height, &nrChannels, 4);
+  unsigned int id;
   if (data) {
     // create renderer texture
     if (r2dCreateTexture(width, height, data, &id)) {
       assert(0);
     }
   } else {
-    return 0;
+    // todo
+    // return 0;
   }
   stbi_image_free(data);
+
+  texture_t t = {
+    .id = id,
+    .width = width,
+    .height = height
+  };
 
   // add to array
   for (int i = 0; i < MAX_TEXTURES; i++) {
     if (textures[i].filled) continue;
 
     textures[i].filled = 1;
-    textures[i].id = id;
+    textures[i].texture = t;
 
     for (int j = 0; j < MAX_PATH; j++) {
       textures[i].path[j] = path[j];
@@ -75,13 +83,5 @@ unsigned int loadTexture(const char *path) {
     break;
   }
 
-  return id;
-}
-
-unsigned int getTexture(const char *path) {
-  unsigned int id = findTexture(path);
-  if (id) {
-    return id;
-  }
-  return loadTexture(path);
+  return t;
 }

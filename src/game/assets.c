@@ -11,24 +11,24 @@
 unsigned int getTileTextureId(tile_e type) {
   switch (type) {
     case TILE_DIRT:
-      return getTexture(SPRITE_DIRT);
+      return loadTexture(SPRITE_DIRT).id;
     case TILE_GRASS:
-      return getTexture(SPRITE_GRASS);
+      return loadTexture(SPRITE_GRASS).id;
     case TILE_SEED:
-      return getTexture(SPRITE_SEED);
+      return loadTexture(SPRITE_SEED).id;
     case TILE_WOOD:
-      return getTexture(SPRITE_WOOD);
+      return loadTexture(SPRITE_WOOD).id;
     case TILE_LEAVES:
-      return getTexture(SPRITE_LEAVES);
+      return loadTexture(SPRITE_LEAVES).id;
     case TILE_DOOR:
-      return getTexture("assets/greysand.png");
+      return loadTexture("assets/greysand.png").id;
     case TILE_STONE:
-      return getTexture("assets/tiles/stone.png");
+      return loadTexture("assets/tiles/stone.png").id;
     case TILE_IRON:
-      return getTexture("assets/tiles/stone_browniron.png");
+      return loadTexture("assets/tiles/stone_browniron.png").id;
     default:
       printf("warning: missing tile texture for %d\n", type);
-      return getTexture(MISSING_TEXTURE);
+      return loadTexture(MISSING_TEXTURE).id;
   }
 }
 
@@ -60,45 +60,45 @@ item_e tileDrop(tile_e tile) {
 unsigned int getItemTextureId(item_e item) {
   switch (item) {
     case ITEM_PICKAXE:
-      return getTexture("assets/Items/pick_iron.png");
+      return loadTexture("assets/Items/pick_iron.png").id;
     case ITEM_AXE:
-      return getTexture("assets/Items/axe_iron.png");
+      return loadTexture("assets/Items/axe_iron.png").id;
     case ITEM_DIRT:
-      return getTexture("assets/tiles/dirt.png");
+      return loadTexture("assets/tiles/dirt.png").id;
     case ITEM_GRASS:
-      return getTexture("assets/tiles/dirt_grass.png");
+      return loadTexture("assets/tiles/dirt_grass.png").id;
     case ITEM_SEED:
-      return getTexture("assets/Items/seed.png");
+      return loadTexture("assets/Items/seed.png").id;
     case ITEM_WOOD:
-      return getTexture("assets/tiles/wood.png");
+      return loadTexture("assets/tiles/wood.png").id;
     default:
       printf("warning: missing item texture for item: %d\n", item);
-      return getTexture(MISSING_TEXTURE);
+      return loadTexture(MISSING_TEXTURE).id;
   }
 }
 
 unsigned int getNumberTextureId(int n) {
   switch (n) {
     case 0:
-      return getTexture("assets/numbers/Number0 7x10.png");
+      return loadTexture("assets/numbers/Number0 7x10.png").id;
     case 1:
-      return getTexture("assets/numbers/Number1 7x10.png");
+      return loadTexture("assets/numbers/Number1 7x10.png").id;
     case 2:
-      return getTexture("assets/numbers/Number2 7x10.png");
+      return loadTexture("assets/numbers/Number2 7x10.png").id;
     case 3:
-      return getTexture("assets/numbers/Number3 7x10.png");
+      return loadTexture("assets/numbers/Number3 7x10.png").id;
     case 4:
-      return getTexture("assets/numbers/Number4 7x10.png");
+      return loadTexture("assets/numbers/Number4 7x10.png").id;
     case 5:
-      return getTexture("assets/numbers/Number5 7x10.png");
+      return loadTexture("assets/numbers/Number5 7x10.png").id;
     case 6:
-      return getTexture("assets/numbers/Number6 7x10.png");
+      return loadTexture("assets/numbers/Number6 7x10.png").id;
     case 7:
-      return getTexture("assets/numbers/Number7 7x10.png");
+      return loadTexture("assets/numbers/Number7 7x10.png").id;
     case 8:
-      return getTexture("assets/numbers/Number8 7x10.png");
+      return loadTexture("assets/numbers/Number8 7x10.png").id;
     case 9:
-      return getTexture("assets/numbers/Number9 7x10.png");
+      return loadTexture("assets/numbers/Number9 7x10.png").id;
   }
   return 0;
 }

@@ -112,7 +112,12 @@ void animationSystem(double dt) {
       if (animation->frame == animation->totalFrames) {
         animation->frame = 0;
       }
-      sprite->texture = animation->frames[animation->frame];
+      sprite->texture = animation->texture.id;
+
+      sprite->subX = animation->frames[animation->frame].x / animation->texture.width;
+      sprite->subY = animation->frames[animation->frame].y / animation->texture.height;
+      sprite->subWidth = animation->frames[animation->frame].z / animation->texture.width;
+      sprite->subHeight = animation->frames[animation->frame].w / animation->texture.height;
     }
 
   }
