@@ -15,9 +15,9 @@ int r2dCreateTexture(int width, int height, unsigned char *data, unsigned int *t
 
 void r2dDrawSprite(camera_t *camera, sprite_t sprite);
 
-void r2dSetView(mat4 a);
-void r2dSetProjection(mat4 a);
 // 256 max
 void r2dSetClearColorRGBA(float r, float g, float b, float a);
+
+int drawCalls();
 
 #endif

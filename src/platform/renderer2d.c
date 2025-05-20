@@ -16,6 +16,8 @@ typedef struct {
   int maxTextures;
   mat4 view;
   mat4 projection;
+
+  int drawCalls;
 } renderer2d_t;
 
 static renderer2d_t renderer;
@@ -218,6 +220,7 @@ int r2dCreateTexture(int width, int height, unsigned char *data, unsigned int *t
 }
 
 void r2dDrawSprite(camera_t *camera, sprite_t sprite) {
+  renderer.drawCalls++;
   if (renderer.boundTexture != sprite.texture) {
     glBindTexture(GL_TEXTURE_2D, sprite.texture);
     renderer.boundTexture = sprite.texture;
@@ -279,4 +282,10 @@ sprite_t createSprite(float x, float y, float width, float height, float rotatio
 
 void r2dSetClearColorRGBA(float r, float g, float b, float a) {
   glClearColor(r / 256, g / 256, b / 256, a);
+}
+
+int drawCalls() {
+  int t = renderer.drawCalls;
+  renderer.drawCalls = 0;
+  return t;
 }

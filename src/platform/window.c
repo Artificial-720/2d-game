@@ -86,6 +86,8 @@ GLFWwindow *windowInit(int width, int height, const char* title) {
     return 0;
   }
 
+  // disable v-sync
+  glfwSwapInterval(0);
   return window;
 }
 

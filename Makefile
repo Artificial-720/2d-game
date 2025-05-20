@@ -1,5 +1,5 @@
 NAME = game
-CFLAGS = -std=c99 -Wall -Wextra -Werror -g
+CFLAGS = -std=c99 -Wall -Wextra -Werror -g -pg
 LIBFLAGS = -lGL -lglfw -lGLEW -lm
 SRC_DIR := src
 SUBDIRS := $(SRC_DIR) $(SRC_DIR)/game $(SRC_DIR)/platform $(SRC_DIR)/core
