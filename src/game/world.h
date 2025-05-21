@@ -3,8 +3,8 @@
 
 #include "../platform/camera.h"
 
-#define WORLD_WIDTH 10
-#define WORLD_HEIGHT 10
+#define WORLD_WIDTH 800
+#define WORLD_HEIGHT 500
 #define TILE_LOAD_DISTANCE 30
 
 typedef enum {

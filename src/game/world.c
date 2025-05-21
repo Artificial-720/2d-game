@@ -154,7 +154,7 @@ void worldBreakTileBackground(world_t *world, float x, float y) {
 
 void worldGenerate(world_t *world, int seed) {
   assert(world);
-  int surfaceLevel = 5;
+  int surfaceLevel = 70;
   tile_t dirt = {.entityId = 0, .type = TILE_DIRT, .loaded = 0};
 
 
@@ -191,7 +191,7 @@ typedef struct {
   int index;
 } slotWorld_t;
 
-#define MAX_WORLD_SLOTS 100
+#define MAX_WORLD_SLOTS 2000
 static slotWorld_t slots[MAX_WORLD_SLOTS] = {0};
 
 void refreshPhysicsEntities(camera_t *camera, world_t *world) {
@@ -226,18 +226,22 @@ void refreshPhysicsEntities(camera_t *camera, world_t *world) {
     int x = i % world->width;
     int y = i / world->width;
 
-    // check if already have a body
-    int alreadyLoaded = 0;
-    for (int j = 0; j < MAX_WORLD_SLOTS; j++) {
-      if (slots[j].used && slots[j].x == x && slots[j].y == y) {
-        alreadyLoaded = 1;
-        break;
-      }
-    }
-    if (alreadyLoaded) continue;
 
     if (x > camera->pos.x - TILE_LOAD_DISTANCE && x < camera->pos.x + TILE_LOAD_DISTANCE &&
         y > camera->pos.y - TILE_LOAD_DISTANCE && y < camera->pos.y + TILE_LOAD_DISTANCE) {
+
+      // check if already have a body
+      int alreadyLoaded = 0;
+      for (int j = 0; j < MAX_WORLD_SLOTS; j++) {
+        if (slots[j].used && slots[j].x == x && slots[j].y == y) {
+          alreadyLoaded = 1;
+          break;
+        }
+      }
+      if (alreadyLoaded) continue;
+
+
+
       // find a open slot, prefer slots that are not freed
       int found = 0;
       for (int j = 0; j < MAX_WORLD_SLOTS; j++) {

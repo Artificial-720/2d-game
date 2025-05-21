@@ -14,7 +14,7 @@
 #include <stdio.h>
 
 #define PLAYER_START_X 10
-#define PLAYER_START_Y 15
+#define PLAYER_START_Y 75
 #define TICK_RATE (1.0f / 1.0f)
 
 typedef struct {
