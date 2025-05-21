@@ -3,6 +3,7 @@
 #include "components.h"
 #include "ecs.h"
 #include "physics.h"
+#include "../core/noise.h"
 #include "../platform/renderer2d.h"
 
 #include <assert.h>
@@ -152,19 +153,106 @@ void worldBreakTileBackground(world_t *world, float x, float y) {
   }
 }
 
+//-----------------------------------------------------------------------------
+// World Generation
+//-----------------------------------------------------------------------------
+
 void worldGenerate(world_t *world, int seed) {
   assert(world);
   int surfaceLevel = 70;
-  tile_t dirt = {.entityId = 0, .type = TILE_DIRT, .loaded = 0};
+  int maxHill = 5;
+  int dirtDepth = 10;
+  float caveChance = 0.5f;
+  float oreChance = 0.5f;
+  float seedChance = 0.5f;
+  float noiseScale = 0.1f;
 
+  // flat ground for testing
+  // int stopIndex = world->width * (surfaceLevel + 1);
+  // for (int i = 0; i < (world->width * world->height); i++) {
+  //   if (stopIndex == i) break;
+  //   world->tiles[i] = dirt;
+  // }
 
-  // 1. flat ground
-  int stopIndex = world->width * (surfaceLevel + 1);
-  for (int i = 0; i < (world->width * world->height); i++) {
-    if (stopIndex == i) break;
-    world->tiles[i] = dirt;
+  // 1. Generating height
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    double height = perlin(x * noiseScale, surfaceLevel * noiseScale);
+    int offset = maxHill * height;
+
+    for (int y = 0; y < WORLD_HEIGHT; y++) {
+      int index = world->width * y + x;
+      int surface = surfaceLevel + offset;
+      if (y < surface) {
+        world->tiles[index].type = TILE_STONE;
+      }
+      // else {
+      //   world->tiles[index].type = TILE_EMPTY;
+      // }
+    }
   }
 
+  // 2. Generating caves
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    for (int y = 0; y < WORLD_HEIGHT; y++) {
+      int index = world->width * y + x;
+      if (world->tiles[index].type == TILE_STONE) {
+        double chance = perlin(x * noiseScale, y * noiseScale);
+        if (chance > caveChance) {
+          world->tiles[index].type = TILE_EMPTY;
+        }
+      }
+    }
+  }
+
+  // 3. Filling with ore
+  noiseScale += 0.1f;
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    for (int y = 0; y < WORLD_HEIGHT; y++) {
+      int index = world->width * y + x;
+      if (world->tiles[index].type == TILE_STONE) {
+        double chance = perlin(x * noiseScale, y * noiseScale);
+        if (chance > oreChance) {
+          world->tiles[index].type = TILE_IRON;
+        }
+      }
+    }
+  }
+
+  // 4. Surface replacement
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    int count = 0;
+    for (int y = WORLD_HEIGHT - 1; y > 0; y--) {
+      if (count > dirtDepth) break;
+      int index = world->width * y + x;
+
+      if (world->tiles[index].type == TILE_EMPTY) continue;
+
+      if (world->tiles[index].type == TILE_STONE) {
+        if (count == 0) {
+          world->tiles[index].type = TILE_GRASS;
+        } else {
+          world->tiles[index].type = TILE_DIRT;
+        }
+        count++;
+      }
+    }
+  }
+
+  // 5. Planting trees
+  for (int x = 0; x < WORLD_WIDTH; x++) {
+    for (int y = WORLD_HEIGHT - 1; y > 0; y--) {
+      int index = world->width * y + x;
+      if (world->tiles[index].type != TILE_GRASS) continue;
+
+      double chance = perlin(x * noiseScale, y * noiseScale);
+      if (chance > seedChance) {
+        if (validGridCoords(world, x, y + 1)) {
+          int subIndex = world->width * (y + 1) + x;
+          world->background[subIndex].type = TILE_SEED;
+        }
+      }
+    }
+  }
 
   (void)seed;
 }
@@ -295,8 +383,21 @@ void refreshPhysicsEntities(camera_t *camera, world_t *world) {
 //-----------------------------------------------------------------------------
 
 void drawBackground(camera_t * camera, world_t *world) {
-  (void)world;
-  (void)camera;
+  sprite_t sprite = createSprite(0, 0, 1, 1, 0, 0);
+  for (int i = 0; i < (world->height * world->width); i++) {
+    int x = i % world->width;
+    int y = i / world->width;
+    if (y <= camera->pos.y - TILE_LOAD_DISTANCE || y >= camera->pos.y + TILE_LOAD_DISTANCE) continue;
+    if (x > camera->pos.x - TILE_LOAD_DISTANCE && x < camera->pos.x + TILE_LOAD_DISTANCE) {
+      if (world->background[i].type == TILE_EMPTY) continue;
+
+      sprite.x = x;
+      sprite.y = y;
+      sprite.texture = getTileTextureId(world->background[i].type);
+
+      r2dDrawSprite(camera, sprite);
+    }
+  }
 }
 
 void drawForeground(camera_t *camera, world_t *world) {
