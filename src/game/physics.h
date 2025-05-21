@@ -23,4 +23,7 @@ vec2 getVelocity(unsigned int id);
 void setVelocity(unsigned int id, vec2 v);
 int onGround(unsigned int id);
 
+// static bodies
+void setStaticPosition(unsigned int id, vec2 pos);
+
 #endif

@@ -121,6 +121,10 @@ int onGround(unsigned int id) {
   return bodies[id].grounded;
 }
 
+void setStaticPosition(unsigned int id, vec2 pos) {
+  staticBodies[id].pos = pos;
+}
+
 int pointInsideQuad(vec2 pos, vec2 size, vec2 point) {
   if (point.x >= pos.x && point.x <= pos.x + size.x &&
       point.y <= pos.y && point.y >= pos.y - size.y) {

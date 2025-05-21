@@ -11,15 +11,16 @@
 #include "player.h"
 #include "state.h"
 #include "../platform/renderer2d.h"
+#include <stdio.h>
 
 #define PLAYER_START_X 10
-#define PLAYER_START_Y 100
+#define PLAYER_START_Y 15
 #define TICK_RATE (1.0f / 1.0f)
 
 typedef struct {
   camera_t camera;
   camera_t cameraUi;
-  world_t *world;
+  world_t world;
   player_t player;
 } gameState_t;
 
@@ -78,10 +79,10 @@ int gameInit() {
   gameState.player.selected = 0;
 
   // Create our world and load the area around the player
-  gameState.world = worldInit(WORLD_WIDTH, WORLD_HEIGHT);
-  worldGenerate(gameState.world, 10);
+  worldInit(&gameState.world, WORLD_WIDTH, WORLD_HEIGHT);
+  worldGenerate(&gameState.world, 10);
   // load in initial world, load the tiles around the player
-  refreshWorld(gameState.world, gameState.camera.pos.x);
+  refreshPhysicsEntities(&gameState.camera, &gameState.world);
 
   // Setup Camera
   gameState.camera = cameraInit();
@@ -94,7 +95,7 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   // player input
   switch (state) {
     case STATE_PLAYING:
-      state = inputPlaying(&gameState.player, &gameState.camera, gameState.world, input, output);
+      state = inputPlaying(&gameState.player, &gameState.camera, &gameState.world, input, output);
       break;
     case STATE_PAUSE:
       state = inputPause(input);
@@ -102,6 +103,8 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   }
 
   if (state == STATE_PLAYING) {
+    refreshPhysicsEntities(&gameState.camera, &gameState.world);
+
     // update physics
     physicsSystem(dt);
     // pick up tiles near player
@@ -109,19 +112,19 @@ int gameFrame(double dt, input_t *input, output_t *output) {
 
     accumulated += dt;
     if (accumulated > TICK_RATE) {
-      growVegetation(gameState.world);
+      growVegetation(&gameState.world);
       accumulated -= TICK_RATE;
     }
-    refreshWorld(gameState.world, gameState.camera.pos.x);
 
     animationSystem(dt);
   }
 
   // render
   updateCameras(gameState.player.entity, &gameState.camera, &gameState.cameraUi, input);
-  drawBackground(&gameState.camera, gameState.world);
+  printf("x: %f y: %f\n", gameState.camera.pos.x, gameState.camera.pos.y);
+  drawBackground(&gameState.camera, &gameState.world);
   drawEntities(&gameState.camera);
-  drawForeground(&gameState.camera, gameState.world);
+  drawForeground(&gameState.camera, &gameState.world);
   drawHud(&gameState.player, &gameState.cameraUi);
 
   if (state == STATE_PAUSE) {
@@ -132,6 +135,6 @@ int gameFrame(double dt, input_t *input, output_t *output) {
 }
 
 void gameTerminate() {
-  worldTerminate(gameState.world);
+  worldTerminate(&gameState.world);
   ecsTerminate();
 }
