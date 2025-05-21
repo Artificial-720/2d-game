@@ -72,7 +72,7 @@ unsigned int getItemTextureId(item_e item) {
     case ITEM_WOOD:
       return loadTexture("assets/tiles/wood.png").id;
     default:
-      printf("warning: missing item texture for item: %d\n", item);
+      // printf("warning: missing item texture for item: %d\n", item);
       return loadTexture(MISSING_TEXTURE).id;
   }
 }

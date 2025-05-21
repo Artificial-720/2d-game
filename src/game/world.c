@@ -59,7 +59,7 @@ void worldTerminate(world_t *world) {
 int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
   assert(world);
   int ix = (int)x;
-  int iy = (int)y + 1;
+  int iy = (int)(y + 1);
   if (!validGridCoords(world, ix, iy)) return 0;
 
   int index = world->width * iy + ix;
@@ -92,7 +92,7 @@ int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
 void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
   assert(world);
   int ix = (int)x;
-  int iy = (int)y + 1;
+  int iy = (int)(y + 1);
   if (!validGridCoords(world, ix, iy)) return;
 
   int index = world->width * iy + ix;
@@ -109,7 +109,7 @@ void worldBreakTile(world_t *world, float x, float y, tile_e *broken) {
 void worldBreakTileBackground(world_t *world, float x, float y) {
   assert(world);
   int ix = (int)x;
-  int iy = (int)y + 1;
+  int iy = (int)(y + 1);
   if (!validGridCoords(world, ix, iy)) return;
 
   int index = world->width * iy + ix;
@@ -196,8 +196,6 @@ static slotWorld_t slots[MAX_WORLD_SLOTS] = {0};
 
 void refreshPhysicsEntities(camera_t *camera, world_t *world) {
   assert(world);
-  printf("========================================\n");
-  printf("start of refresh physics\n");
 
   // some sort of list of physic bodies
   // remove all the bodies
@@ -218,7 +216,6 @@ void refreshPhysicsEntities(camera_t *camera, world_t *world) {
     } else {
       // should be unloaded
       slots[i].used = 0;
-      printf("marking slot as not used %d\n", i);
     }
   }
 
@@ -245,7 +242,6 @@ void refreshPhysicsEntities(camera_t *camera, world_t *world) {
       int found = 0;
       for (int j = 0; j < MAX_WORLD_SLOTS; j++) {
         if (!slots[j].used && slots[j].hasId) {
-          printf("found open slot that is not freed %d\n", j);
           found = 1;
           slots[j].used = 1;
           slots[j].x = x;
@@ -259,7 +255,6 @@ void refreshPhysicsEntities(camera_t *camera, world_t *world) {
         // find next open slot that is freed
         for (int j = 0; j < MAX_WORLD_SLOTS; j++) {
           if (!slots[j].used) {
-            printf("found slot that is not used %d\n", j);
             slotWorld_t s = {
               .used = 1,
               .hasId = 1,
@@ -284,7 +279,6 @@ void refreshPhysicsEntities(camera_t *camera, world_t *world) {
   // finally remove the unused static bodies
   for (int i = 0; i < MAX_WORLD_SLOTS; i++) {
     if (slots[i].hasId && !slots[i].used) {
-      printf("removing unused static body %d\n", i);
       removeStaticbody(slots[i].id);
       slots[i].hasId = 0;
     }

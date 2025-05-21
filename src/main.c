@@ -78,7 +78,7 @@ int main() {
     gameOutput.toggleFullScreen = 0;
 
     windowSwapBuffers(window);
-    printf("draw calls %d\n", drawCalls());
+    // printf("draw calls %d\n", drawCalls());
   }
 
   windowTerminate(window);

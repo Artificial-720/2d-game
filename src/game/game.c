@@ -121,7 +121,6 @@ int gameFrame(double dt, input_t *input, output_t *output) {
 
   // render
   updateCameras(gameState.player.entity, &gameState.camera, &gameState.cameraUi, input);
-  printf("x: %f y: %f\n", gameState.camera.pos.x, gameState.camera.pos.y);
   drawBackground(&gameState.camera, &gameState.world);
   drawEntities(&gameState.camera);
   drawForeground(&gameState.camera, &gameState.world);
