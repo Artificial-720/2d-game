@@ -72,8 +72,8 @@ int worldPlaceTile(world_t *world, float x, float y, tile_e type) {
 
   // special case tiles
   if (type == TILE_SEED) {
-    if (!validGridCoords(world, x, y - 1)) return 0;
-    int other = world->width * y + x;
+    if (!validGridCoords(world, ix, iy - 1)) return 0;
+    int other = world->width * (iy - 1) + ix;
     if (world->tiles[other].type != TILE_GRASS) return 0;
   }
   // todo handle doors
@@ -296,6 +296,65 @@ static void updateGrass(world_t *world, int index) {
   }
 }
 
+#define SEED_GROW_CHANCE 50
+#define LEAF_CHANCE 45
+#define LEAF_MIN_HEIGHT 4
+#define TREE_MAX_HEIGHT 10
+#define TREE_BRANCH_CHANCE 10
+
+static int seedCanGrow(world_t *world, int index) {
+  assert(world);
+  assert(world->background[index].type == TILE_SEED);
+
+  const int treeWidth = 3;
+  int temp = index - 1;
+  for (int i = 0; i < TREE_MAX_HEIGHT; i++) {
+    for (int j = 0; j < treeWidth; j++) {
+      if (world->tiles[temp + j].type != TILE_EMPTY) {
+        return 0;
+      }
+      if (world->background[temp + j].type != TILE_EMPTY &&
+          world->background[temp + j].type != TILE_SEED) {
+        return 0;
+      }
+    }
+    temp += WORLD_WIDTH;
+  }
+
+  return 1;
+}
+
+static void updateSeed(world_t *world, int index) {
+  assert(world);
+  assert(world->background[index].type == TILE_SEED);
+  if (!seedCanGrow(world, index)) return;
+  if (!(rand() % 100 < SEED_GROW_CHANCE)) return;
+
+  // grow the tree
+  int temp = index - 1;
+  for (int i = 0; i < TREE_MAX_HEIGHT - 2; i++) {
+    world->background[temp + 1].type = TILE_WOOD;
+
+    if (i >= LEAF_MIN_HEIGHT) {
+      if (rand() % 100 < LEAF_CHANCE) {
+        world->background[temp].type = TILE_LEAVES;
+      }
+      if (rand() % 100 < LEAF_CHANCE) {
+        world->background[temp + 2].type = TILE_LEAVES;
+      }
+    }
+
+    temp += WORLD_WIDTH;
+  }
+  world->background[temp].type = TILE_LEAVES;
+  world->background[temp + 1].type = TILE_LEAVES;
+  world->background[temp + 2].type = TILE_LEAVES;
+  temp += WORLD_WIDTH;
+  world->background[temp].type = TILE_LEAVES;
+  world->background[temp + 1].type = TILE_LEAVES;
+  world->background[temp + 2].type = TILE_LEAVES;
+}
+
 void growVegetation(world_t *world) {
   assert(world);
   for (int i = 0; i < (world->width * world->height); i++) {
@@ -304,6 +363,7 @@ void growVegetation(world_t *world) {
       updateGrass(world, i);
     }
     if (world->background[i].type == TILE_SEED) {
+      updateSeed(world, i);
     }
   }
 }
