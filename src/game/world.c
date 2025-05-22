@@ -260,9 +260,52 @@ void worldGenerate(world_t *world, int seed) {
 //-----------------------------------------------------------------------------
 // Growth
 //-----------------------------------------------------------------------------
+static int validGrassLocation(world_t *world, int index) {
+  int above = index + WORLD_WIDTH;
+  if (world->tiles[above].type != TILE_EMPTY &&
+      world->tiles[above].type != TILE_SEED) {
+    return 0;
+  }
+  return 1;
+}
+
+static void updateGrass(world_t *world, int index) {
+  assert(world->tiles[index].type == TILE_GRASS);
+
+  // kill grass
+  if (!validGrassLocation(world, index)) {
+    world->tiles[index].type = TILE_DIRT;
+    world->tiles[index].dirty = 1;
+  }
+
+  // spread
+  if (rand() % 2) {
+    int right = index - 1; // make sure dont wrap around
+    if (world->tiles[right].type == TILE_DIRT &&
+        validGrassLocation(world, right)) {
+      world->tiles[right].type = TILE_GRASS;
+      world->tiles[right].dirty = 1;
+    }
+  } else {
+    int left = index + 1; // make sure dont wrap around
+    if (world->tiles[left].type == TILE_DIRT &&
+        validGrassLocation(world, left)) {
+      world->tiles[left].type = TILE_GRASS;
+      world->tiles[left].dirty = 1;
+    }
+  }
+}
 
 void growVegetation(world_t *world) {
-  (void)world;
+  assert(world);
+  for (int i = 0; i < (world->width * world->height); i++) {
+    if (world->tiles[i].dirty) continue;
+    if (world->tiles[i].type == TILE_GRASS) {
+      updateGrass(world, i);
+    }
+    if (world->background[i].type == TILE_SEED) {
+    }
+  }
 }
 
 
