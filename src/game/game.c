@@ -1,5 +1,6 @@
 #include "game.h"
 
+#include "animation.h"
 #include "ecs.h"
 #include "item.h"
 #include "physics.h"
@@ -29,18 +30,56 @@ static double accumulated;
 static state_e state;
 
 void spawnSlime(entity_t target) {
+  float width = 6.0f;
+  float height = 2.0f;
+
+
+
   texture_t texture = loadTexture("assets/image.png");
   entity_t slime = ecsCreateEntity();
-  sprite_t sprite = createSprite(0, 0, 1.0f, 1.0f, 0, texture.id);
+  sprite_t sprite = createSprite(0, 0, width, height, 0, texture.id);
   transform_t transform = {.pos = (vec2){10.0f, 100.0f}};
   physics_t p = {.body = 0, .isStatic = 0};
-  p.body = createBody((vec2){5, 100}, (vec2){1.0f, 1.0f});
+  p.body = createBody((vec2){5, 80}, (vec2){width, height});
   ai_t ai = {.target = target, .agroDis = 50.0f};
-
   ecsAddComponent(slime, SPRITE, (void*)&sprite);
   ecsAddComponent(slime, TRANSFORM, (void*)&transform);
   ecsAddComponent(slime, PHYSICS, (void*)&p);
   ecsAddComponent(slime, AI, (void*)&ai);
+
+
+  cooldown_t c = {0};
+  animationComponent_t ani = {0};
+  ani.callback = slimeAnimation;
+  ani.animations[ANIM_IDLE] = createAnimation(
+    loadTexture("assets/slime/Slime Enemy/Idle/Sprite Sheet - Green Idle.png"),
+    0, 0, 7, 96, 32, 0.3f);
+  ani.animations[ANIM_JUMP_START] = createAnimation(
+    loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Start-up.png"),
+    0, 0, 7, 96, 32, 0.3f);
+  ani.animations[ANIM_JUMP_UP] = createAnimation(
+    loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Up.png"),
+    0, 0, 1, 96, 32, 0.3f);
+  ani.animations[ANIM_JUMP_FALL] = createAnimation(
+    loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump to Fall.png"),
+    0, 0, 5, 96, 32, 0.1f);
+  ani.animations[ANIM_JUMP_DOWN] = createAnimation(
+    loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Down.png"),
+    0, 0, 1, 96, 32, 0.3f);
+  ani.animations[ANIM_JUMP_LAND] = createAnimation(
+    loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Land.png"),
+    0, 0, 6, 96, 32, 0.3f);
+
+  // ANIM_HURT,
+  // ANIM_DEATH,
+  // ANIM_COUNT
+
+  ecsAddComponent(slime, ANIMATION, (void*)&ani);
+  ecsAddComponent(slime, COOLDOWN, (void*)&c);
+
+
+
+  (void)target;
 }
 
 
@@ -59,8 +98,9 @@ int gameInit() {
   ecsRegisterComponent(PHYSICS, sizeof(physics_t));
   ecsRegisterComponent(UI, sizeof(ui_t));
   ecsRegisterComponent(PICKUP, sizeof(pickup_t));
-  ecsRegisterComponent(ANIMATION, sizeof(animation_t));
+  ecsRegisterComponent(ANIMATION, sizeof(animationComponent_t));
   ecsRegisterComponent(AI, sizeof(ai_t));
+  ecsRegisterComponent(COOLDOWN, sizeof(cooldown_t));
 
   gameState.player.pickupDis = 3.0f;
 
@@ -71,17 +111,26 @@ int gameInit() {
   transform_t transform = {.pos = (vec2){10, 10}};
   physics_t p = {.body = 0, .isStatic = 0};
   p.body = createBody((vec2){PLAYER_START_X, PLAYER_START_Y}, (vec2){1.5f, 3.0f});
-  animation_t animation = {0};
-  animation.frameTime = 0.5f;
-  animation.texture = loadTexture("assets/player.png");
-  for (int i = 0; i < 7; i++) {
-    animation.frames[i] = (vec4){(32 * i), 576, 32, 48};
-  }
-  animation.totalFrames = 7;
+  // animation_t animation = {0};
+  // animation.frameTime = 0.5f;
+  // animation.texture = loadTexture("assets/player.png");
+  // for (int i = 0; i < 7; i++) {
+  //   animation.frames[i] = (vec4){(32 * i), 576, 32, 48};
+  // }
+  // animation.totalFrames = 7;
+
+  // animationComponent_t ani = {0};
+  // ani.animations[ANIM_IDLE] = createAnimation(
+  //   loadTexture("assets/player.png"),
+  //   0, 576, 7, 32, 48, 0.3f);
+  // ecsAddComponent(player, ANIMATION, (void*)&ani);
+
+
+
   ecsAddComponent(player, SPRITE, (void*)&sprite);
   ecsAddComponent(player, TRANSFORM, (void*)&transform);
   ecsAddComponent(player, PHYSICS, (void*)&p);
-  ecsAddComponent(player, ANIMATION, (void*)&animation);
+  // ecsAddComponent(player, ANIMATION, (void*)&animation);
   gameState.player.entity = player;
 
   // Setup UI entities
@@ -123,6 +172,7 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   }
 
   if (state == STATE_PLAYING) {
+    cooldownSystem(dt);
     aiSystem(dt);
     refreshPhysicsEntities(&gameState.camera, &gameState.world);
 

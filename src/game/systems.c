@@ -1,5 +1,6 @@
 #include "systems.h"
 
+#include "animation.h"
 #include "components.h"
 #include "ecs.h"
 #include "item.h"
@@ -102,24 +103,73 @@ void animationSystem(double dt) {
   entity_t *entities = ecsQuery(sig, &count);
   for (int i = 0; i < count; i++) {
     entity_t entity = entities[i];
-    animation_t *animation = (animation_t*)ecsGetComponent(entity, ANIMATION);
+    animationComponent_t *ani = (animationComponent_t*)ecsGetComponent(entity, ANIMATION);
     sprite_t *sprite = (sprite_t*)ecsGetComponent(entity, SPRITE);
 
-    animation->accumulatedTime += dt;
-    if (animation->accumulatedTime > animation->frameTime) {
-      animation->accumulatedTime = 0.0f;
-      animation->frame++;
-      if (animation->frame == animation->totalFrames) {
-        animation->frame = 0;
-      }
-      sprite->texture = animation->texture.id;
 
-      sprite->subX = animation->frames[animation->frame].x / animation->texture.width;
-      sprite->subY = animation->frames[animation->frame].y / animation->texture.height;
-      sprite->subWidth = animation->frames[animation->frame].z / animation->texture.width;
-      sprite->subHeight = animation->frames[animation->frame].w / animation->texture.height;
+    int facingLeft = 0;
+
+    ani_cb cb = ani->callback;
+    if (cb) {
+      animationState_e cache = ani->state;
+      ani->state = cb(entity, &facingLeft);
+      if (cache != ani->state) {
+        ani->animations[ani->state].current = 0;
+        ani->cooldown = 0;
+      }
     }
 
+
+
+
+    if (ani->cooldown <= 0.0f) {
+      animation_t *a = &ani->animations[ani->state];
+
+      printf("calling state for entity %d, state: %d\n", entity, ani->state);
+      printf("current frame: %d\n", a->current);
+
+      sprite->texture = a->texture.id;
+      if (facingLeft) {
+        // Flip horizontally by using negative subWidth and adjusting subX
+        sprite->subWidth = -(float)a->width / a->texture.width;
+        sprite->subX = (a->x + ((float)a->width * (a->current + 1))) / a->texture.width;
+
+        sprite->subY = (float)a->y / a->texture.height;
+        sprite->subHeight = (float)a->height / a->texture.height;
+      } else {
+        sprite->subX = (a->x + ((float)a->width * a->current)) / a->texture.width;
+        sprite->subY = (float)a->y / a->texture.height;
+        sprite->subWidth = (float)a->width / a->texture.width;
+        sprite->subHeight = (float)a->height / a->texture.height;
+      }
+
+
+
+      printf("sprite x: %f y: %f width %f height %f\n", sprite->subX, sprite->subY, sprite->subWidth, sprite->subHeight);
+
+      a->current += 1;
+      if (a->current >= a->total) {
+        a->current = 0;
+      }
+
+      ani->cooldown = 0.3f;
+    }
+    ani->cooldown -= dt;
+
+  }
+  free(entities);
+}
+
+void cooldownSystem(double dt) {
+  int count = 0;
+  unsigned long sig = ecsGetSignature(COOLDOWN);
+  entity_t *entities = ecsQuery(sig, &count);
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    cooldown_t *cooldown = (cooldown_t*)ecsGetComponent(entity, COOLDOWN);
+    if (cooldown->time > 0.0f) {
+      cooldown->time -= dt;
+    }
   }
   free(entities);
 }
@@ -134,28 +184,64 @@ void aiSystem(double dt) {
     physics_t *physics = (physics_t*)ecsGetComponent(entity, PHYSICS);
     ai_t *ai = (ai_t*)ecsGetComponent(entity, AI);
 
-    if (ai->cooldown <= 0) {
+    int grounded = onGround(physics->body);
+    vec2 vel = getVelocity(physics->body);
+    if (grounded) {
+      vel.x = 0.0f;
+      setVelocity(physics->body, vel);
+    }
+
+    if (ai->cooldown > 0) {
+      ai->cooldown -= dt;
+      continue;
+    }
+
+    if (ai->state == AI_IDLE) {
       transform_t *target = (transform_t*)ecsGetComponent(ai->target, TRANSFORM);
       double dis = distance((vec3){transform->pos.x, transform->pos.y, 0.0f}, (vec3){target->pos.x, target->pos.y, 0.0f});
       if (dis < ai->agroDis) {
-        // move towards the follow target
-        // slime apply a 45 degree jump
-
-        vec2 force = {0.0f, 0.0f};
-        if (onGround(physics->body)) {
-          force.x = 340.0f;
-          force.y = 340.0f;
-        }
-        if (transform->pos.x > target->pos.x) {
-          force.x *= -1.0f;
-        }
-        applyForce(physics->body, force);
+        ai->state = AI_PRE_JUMP;
+        ai->cooldown = 2.0f;
       }
-      ai->cooldown = 2.0f;
-    }
+      if (transform->pos.x > target->pos.x) {
+        ai->facingLeft = 1;
+      } else {
+        ai->facingLeft = 0;
+      }
 
-    ai->cooldown -= dt;
-  }
+    } else if (ai->state == AI_PRE_JUMP) {
+      transform_t *target = (transform_t*)ecsGetComponent(ai->target, TRANSFORM);
+      // apply force
+      float jumpForce = 340.0f; // 340
+      vec2 force = {0.0f, 0.0f};
+      if (onGround(physics->body)) {
+        force.x = jumpForce;
+        force.y = jumpForce;
+      }
+      if (transform->pos.x > target->pos.x) {
+        force.x *= -1.0f;
+      }
+      applyForce(physics->body, force);
+
+      ai->state = AI_JUMPING;
+    } else if (ai->state == AI_JUMPING) {
+      if (vel.y < 1.0f) {
+        ai->state = AI_JUMP_TO_FALL;
+      }
+    } else if (ai->state == AI_JUMP_TO_FALL) {
+      if (vel.y < -1.0f) {
+        ai->state = AI_FALLING;
+      }
+    } else if (ai->state == AI_FALLING) {
+      if (grounded) {
+        ai->state = AI_LANDING;
+        ai->cooldown = 1.5f;
+      }
+    } else if (ai->state == AI_LANDING) {
+      ai->state = AI_IDLE;
+      ai->cooldown = 1.0f;
+    }
+  } /* end for */
   free(entities);
 }
 
