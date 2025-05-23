@@ -28,6 +28,23 @@ static gameState_t gameState;
 static double accumulated;
 static state_e state;
 
+void spawnSlime(entity_t target) {
+  texture_t texture = loadTexture("assets/image.png");
+  entity_t slime = ecsCreateEntity();
+  sprite_t sprite = createSprite(0, 0, 1.0f, 1.0f, 0, texture.id);
+  transform_t transform = {.pos = (vec2){10.0f, 100.0f}};
+  physics_t p = {.body = 0, .isStatic = 0};
+  p.body = createBody((vec2){5, 100}, (vec2){1.0f, 1.0f});
+  ai_t ai = {.target = target, .agroDis = 50.0f};
+
+  ecsAddComponent(slime, SPRITE, (void*)&sprite);
+  ecsAddComponent(slime, TRANSFORM, (void*)&transform);
+  ecsAddComponent(slime, PHYSICS, (void*)&p);
+  ecsAddComponent(slime, AI, (void*)&ai);
+}
+
+
+
 int gameInit() {
   accumulated = 0.0f;
   state = STATE_PLAYING;
@@ -43,6 +60,7 @@ int gameInit() {
   ecsRegisterComponent(UI, sizeof(ui_t));
   ecsRegisterComponent(PICKUP, sizeof(pickup_t));
   ecsRegisterComponent(ANIMATION, sizeof(animation_t));
+  ecsRegisterComponent(AI, sizeof(ai_t));
 
   gameState.player.pickupDis = 3.0f;
 
@@ -84,6 +102,8 @@ int gameInit() {
   // load in initial world, load the tiles around the player
   refreshPhysicsEntities(&gameState.camera, &gameState.world);
 
+  spawnSlime(player);
+
   // Setup Camera
   gameState.camera = cameraInit();
   gameState.cameraUi = cameraInit();
@@ -103,6 +123,7 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   }
 
   if (state == STATE_PLAYING) {
+    aiSystem(dt);
     refreshPhysicsEntities(&gameState.camera, &gameState.world);
 
     // update physics

@@ -124,6 +124,41 @@ void animationSystem(double dt) {
   free(entities);
 }
 
+void aiSystem(double dt) {
+  int count = 0;
+  unsigned long sig = ecsGetSignature(TRANSFORM) | ecsGetSignature(PHYSICS) | ecsGetSignature(AI);
+  entity_t *entities = ecsQuery(sig, &count);
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
+    physics_t *physics = (physics_t*)ecsGetComponent(entity, PHYSICS);
+    ai_t *ai = (ai_t*)ecsGetComponent(entity, AI);
+
+    if (ai->cooldown <= 0) {
+      transform_t *target = (transform_t*)ecsGetComponent(ai->target, TRANSFORM);
+      double dis = distance((vec3){transform->pos.x, transform->pos.y, 0.0f}, (vec3){target->pos.x, target->pos.y, 0.0f});
+      if (dis < ai->agroDis) {
+        // move towards the follow target
+        // slime apply a 45 degree jump
+
+        vec2 force = {0.0f, 0.0f};
+        if (onGround(physics->body)) {
+          force.x = 340.0f;
+          force.y = 340.0f;
+        }
+        if (transform->pos.x > target->pos.x) {
+          force.x *= -1.0f;
+        }
+        applyForce(physics->body, force);
+      }
+      ai->cooldown = 2.0f;
+    }
+
+    ai->cooldown -= dt;
+  }
+  free(entities);
+}
+
 
 void physicsSystem(double dt) {
   physicsStep(dt);

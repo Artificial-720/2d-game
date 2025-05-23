@@ -1,11 +1,12 @@
 #ifndef COMPONENTS_H
 #define COMPONENTS_H
 
+#include "ecs.h"
 #include "texture.h"
 #include "../core/math.h"
 
 enum component_id {
-  TRANSFORM, SPRITE, PHYSICS, UI, PICKUP, ANIMATION
+  TRANSFORM, SPRITE, PHYSICS, UI, PICKUP, ANIMATION, AI
 };
 
 typedef struct {
@@ -25,6 +26,12 @@ typedef struct {
   texture_t texture;
   vec4 frames[10];
 } animation_t;
+
+typedef struct {
+  entity_t target;
+  double agroDis;
+  double cooldown;
+} ai_t;
 
 
 #endif
