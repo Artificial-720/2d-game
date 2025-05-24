@@ -164,7 +164,7 @@ void worldGenerate(world_t *world, int seed) {
   int dirtDepth = 10;
   float caveChance = 0.5f;
   float oreChance = 0.5f;
-  float seedChance = 0.5f;
+  float seedChance = 0.3f;
   float noiseScale = 0.1f;
 
   // flat ground for testing
