@@ -56,7 +56,7 @@ void spawnSlime(entity_t target) {
     0, 0, 7, 96, 32, 0.3f);
   ani.animations[ANIM_JUMP_START] = createAnimation(
     loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Start-up.png"),
-    0, 0, 7, 96, 32, 0.3f);
+    0, 0, 7, 96, 32, 0.214f);
   ani.animations[ANIM_JUMP_UP] = createAnimation(
     loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Up.png"),
     0, 0, 1, 96, 32, 0.3f);

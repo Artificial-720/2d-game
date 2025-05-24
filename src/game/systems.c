@@ -201,7 +201,7 @@ void aiSystem(double dt) {
       double dis = distance((vec3){transform->pos.x, transform->pos.y, 0.0f}, (vec3){target->pos.x, target->pos.y, 0.0f});
       if (dis < ai->agroDis) {
         ai->state = AI_PRE_JUMP;
-        ai->cooldown = 2.0f;
+        ai->cooldown = 1.5f;
       }
       if (transform->pos.x > target->pos.x) {
         ai->facingLeft = 1;
