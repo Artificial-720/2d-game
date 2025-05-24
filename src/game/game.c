@@ -28,11 +28,12 @@ typedef struct {
 static gameState_t gameState;
 static double accumulated;
 static state_e state;
+static const double fixedDelta = 1.0f / 60.0f;
+static double accumulatedPhysics;
 
 void spawnSlime(entity_t target) {
   float width = 6.0f;
   float height = 2.0f;
-
 
 
   texture_t texture = loadTexture("assets/image.png");
@@ -86,6 +87,7 @@ void spawnSlime(entity_t target) {
 
 int gameInit() {
   accumulated = 0.0f;
+  accumulatedPhysics = 0.0f;
   state = STATE_PLAYING;
   // Set sky color
   r2dSetClearColorRGBA(130.0f, 190.0f, 253.0f, 1.0f);
@@ -160,6 +162,7 @@ int gameInit() {
   return 0;
 }
 
+
 int gameFrame(double dt, input_t *input, output_t *output) {
   // player input
   switch (state) {
@@ -176,8 +179,12 @@ int gameFrame(double dt, input_t *input, output_t *output) {
     aiSystem(dt);
     refreshPhysicsEntities(&gameState.camera, &gameState.world);
 
-    // update physics
-    physicsSystem(dt);
+    accumulatedPhysics += dt;
+    while (accumulatedPhysics > fixedDelta) {
+      // update physics
+      physicsSystem(fixedDelta);
+      accumulatedPhysics -= fixedDelta;
+    }
     // pick up tiles near player
     pickupItems(&gameState.player);
 
