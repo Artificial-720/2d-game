@@ -13,6 +13,7 @@ typedef enum {
   ANIM_JUMP_LAND,
   ANIM_HURT,
   ANIM_DEATH,
+  ANIM_WALK,
   ANIM_COUNT
 } animationState_e;
 
@@ -27,6 +28,7 @@ typedef struct {
   int width, height;
   double time;
   int x, y;
+  int paddingX, paddingY;
 } animation_t;
 
 typedef struct {
@@ -43,6 +45,6 @@ typedef struct {
 animationState_e slimeAnimation(entity_t entity, int *facingLeft);
 
 
-animation_t createAnimation(texture_t texture, int x, int y, int frames, int width, int height, double time);
+animation_t createAnimation(texture_t texture, int x, int y, int paddingX, int paddingY, int frames, int width, int height, double time);
 
 #endif

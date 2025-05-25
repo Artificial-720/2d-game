@@ -31,6 +31,20 @@ static state_e state;
 static const double fixedDelta = 1.0f / 60.0f;
 static double accumulatedPhysics;
 
+animationState_e playerAnimation(entity_t entity, int *facingLeft) {
+  (void)entity;
+  *facingLeft = gameState.player.facingLeft;
+  switch (gameState.player.state) {
+    case PLAYER_IDLE:         return ANIM_IDLE;
+    case PLAYER_JUMPING:      return ANIM_JUMP_UP;
+    case PLAYER_FALLING:      return ANIM_JUMP_DOWN;
+    case PLAYER_HURT:         return ANIM_HURT;
+    case PLAYER_DEAD:         return ANIM_DEATH;
+    case PLAYER_WALKING:      return ANIM_WALK;
+    default:              return ANIM_IDLE;
+  }
+}
+
 void spawnSlime(entity_t target) {
   float width = 6.0f;
   float height = 2.0f;
@@ -54,22 +68,22 @@ void spawnSlime(entity_t target) {
   ani.callback = slimeAnimation;
   ani.animations[ANIM_IDLE] = createAnimation(
     loadTexture("assets/slime/Slime Enemy/Idle/Sprite Sheet - Green Idle.png"),
-    0, 0, 7, 96, 32, 0.3f);
+    0, 0, 0, 0, 7, 96, 32, 0.3f);
   ani.animations[ANIM_JUMP_START] = createAnimation(
     loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Start-up.png"),
-    0, 0, 7, 96, 32, 0.214f);
+    0, 0, 0, 0, 7, 96, 32, 0.214f);
   ani.animations[ANIM_JUMP_UP] = createAnimation(
     loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Up.png"),
-    0, 0, 1, 96, 32, 0.3f);
+    0, 0, 0, 0, 1, 96, 32, 0.3f);
   ani.animations[ANIM_JUMP_FALL] = createAnimation(
     loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump to Fall.png"),
-    0, 0, 5, 96, 32, 0.1f);
+    0, 0, 0, 0, 5, 96, 32, 0.1f);
   ani.animations[ANIM_JUMP_DOWN] = createAnimation(
     loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Down.png"),
-    0, 0, 1, 96, 32, 0.3f);
+    0, 0, 0, 0, 1, 96, 32, 0.3f);
   ani.animations[ANIM_JUMP_LAND] = createAnimation(
     loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Land.png"),
-    0, 0, 6, 96, 32, 0.3f);
+    0, 0, 0, 0, 6, 96, 32, 0.3f);
 
   // ANIM_HURT,
   // ANIM_DEATH,
@@ -107,32 +121,26 @@ int gameInit() {
   gameState.player.pickupDis = 3.0f;
 
   // Create our player entity
-  unsigned int texture = loadTexture("assets/image.png").id;
+  int width = 2;
+  int height = 2;
+  texture_t texture = loadTexture("assets/player/spritesheet.png");
   entity_t player = ecsCreateEntity();
-  sprite_t sprite = createSprite(10, 10, 1.5, 3, 0, texture);
+  sprite_t sprite = createSprite(10, 10, width, height, 0, texture.id);
   transform_t transform = {.pos = (vec2){10, 10}};
   physics_t p = {.body = 0, .isStatic = 0};
-  p.body = createBody((vec2){PLAYER_START_X, PLAYER_START_Y}, (vec2){1.5f, 3.0f});
-  // animation_t animation = {0};
-  // animation.frameTime = 0.5f;
-  // animation.texture = loadTexture("assets/player.png");
-  // for (int i = 0; i < 7; i++) {
-  //   animation.frames[i] = (vec4){(32 * i), 576, 32, 48};
-  // }
-  // animation.totalFrames = 7;
+  p.body = createBody((vec2){PLAYER_START_X, PLAYER_START_Y}, (vec2){width, height});
 
-  // animationComponent_t ani = {0};
-  // ani.animations[ANIM_IDLE] = createAnimation(
-  //   loadTexture("assets/player.png"),
-  //   0, 576, 7, 32, 48, 0.3f);
-  // ecsAddComponent(player, ANIMATION, (void*)&ani);
-
-
+  animationComponent_t ani = {0};
+  ani.callback = playerAnimation;
+  ani.animations[ANIM_IDLE] = createAnimation(texture, 0, 1152, 37, 0, 6, 128, 40, 0.3f);
+  ani.animations[ANIM_JUMP_UP] = createAnimation(texture, 0, 896, 37, 0, 3, 128, 40, 0.3f);
+  ani.animations[ANIM_JUMP_DOWN] = createAnimation(texture, 0, 768, 37, 0, 5, 128, 40, 0.3f);
+  ani.animations[ANIM_WALK] = createAnimation(texture, 0, 1024, 37, 0, 8, 128, 40, 0.1f);
+  ecsAddComponent(player, ANIMATION, (void*)&ani);
 
   ecsAddComponent(player, SPRITE, (void*)&sprite);
   ecsAddComponent(player, TRANSFORM, (void*)&transform);
   ecsAddComponent(player, PHYSICS, (void*)&p);
-  // ecsAddComponent(player, ANIMATION, (void*)&animation);
   gameState.player.entity = player;
 
   // Setup UI entities

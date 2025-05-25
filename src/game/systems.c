@@ -27,12 +27,22 @@ state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t
   // apply forces
   physics_t *playerBody = (physics_t*)ecsGetComponent(player->entity, PHYSICS);
   vec2 velocity = getVelocity(playerBody->body);
+  int grounded = onGround(playerBody->body);
   if (input->keyStates[KEY_A] == KEY_HELD) {
     velocity.x = -4.0f;
+    player->facingLeft = 1;
+    if (grounded) {
+      player->state = PLAYER_WALKING;
+    }
   } else if (input->keyStates[KEY_D] == KEY_HELD) {
     velocity.x = 4.0f;
+    player->facingLeft = 0;
+    if (grounded) {
+      player->state = PLAYER_WALKING;
+    }
   } else {
     velocity.x = 0.0f;
+    player->state = PLAYER_IDLE;
   }
   if (input->keyStates[KEY_W] == KEY_HELD) {
     velocity.y = 4.0f;
@@ -44,8 +54,16 @@ state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t
   if (input->keyStates[KEY_SPACE] == KEY_HELD) {
     if (onGround(playerBody->body)) {
       applyForce(playerBody->body, (vec2){0.0f, 800.0f});
+      player->state = PLAYER_JUMPING;
     }
   }
+
+  if (velocity.y < -0.01f) {
+    player->state = PLAYER_FALLING;
+  } else if (velocity.y > 0.01f) {
+    player->state = PLAYER_JUMPING;
+  }
+
 
   // hot bar selection
   if (input->keyStates[KEY_1] == KEY_PRESS) {
@@ -131,15 +149,16 @@ void animationSystem(double dt) {
       sprite->texture = a->texture.id;
       if (facingLeft) {
         // Flip horizontally by using negative subWidth and adjusting subX
-        sprite->subWidth = -(float)a->width / a->texture.width;
-        sprite->subX = (a->x + ((float)a->width * (a->current + 1))) / a->texture.width;
+        sprite->subWidth = -((float)(a->width - 2 * a->paddingX) / a->texture.width);
+        sprite->subX = (a->x + ((float)a->width * (a->current + 1)) - a->paddingX) / a->texture.width;
 
         sprite->subY = (float)a->y / a->texture.height;
         sprite->subHeight = (float)a->height / a->texture.height;
       } else {
-        sprite->subX = (a->x + ((float)a->width * a->current)) / a->texture.width;
+        sprite->subX = ((a->x + ((float)a->width * a->current)) + a->paddingX) / a->texture.width;
         sprite->subY = (float)a->y / a->texture.height;
-        sprite->subWidth = (float)a->width / a->texture.width;
+        // sprite->subWidth = (float)a->width / a->texture.width;
+        sprite->subWidth = (float)(a->width - 2 * a->paddingX) / a->texture.width;
         sprite->subHeight = (float)a->height / a->texture.height;
       }
 

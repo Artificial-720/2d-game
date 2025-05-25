@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-animation_t createAnimation(texture_t texture, int x, int y, int frames, int width, int height, double time) {
+animation_t createAnimation(texture_t texture, int x, int y, int paddingX, int paddingY, int frames, int width, int height, double time) {
   animation_t a = {0};
   a.set = 1;
   a.width = width;
@@ -18,6 +18,8 @@ animation_t createAnimation(texture_t texture, int x, int y, int frames, int wid
   a.time = time;
   a.x = x;
   a.y = y;
+  a.paddingX = paddingX;
+  a.paddingY = paddingY;
 
   return a;
 }
