@@ -42,7 +42,9 @@ state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t
     }
   } else {
     velocity.x = 0.0f;
-    player->state = PLAYER_IDLE;
+    if (player->state != PLAYER_USE) {
+      player->state = PLAYER_IDLE;
+    }
   }
   if (input->keyStates[KEY_W] == KEY_HELD) {
     velocity.y = 4.0f;
@@ -95,6 +97,7 @@ state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t
     if (use) {
       use(world, player, (vec2){worldPos.x, worldPos.y});
     }
+    player->state = PLAYER_USE;
   }
   if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
     // vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
@@ -171,7 +174,7 @@ void animationSystem(double dt) {
         a->current = 0;
       }
 
-      ani->cooldown = 0.3f;
+      ani->cooldown = a->time;
     }
     ani->cooldown -= dt;
 

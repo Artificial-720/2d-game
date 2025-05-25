@@ -41,6 +41,7 @@ animationState_e playerAnimation(entity_t entity, int *facingLeft) {
     case PLAYER_HURT:         return ANIM_HURT;
     case PLAYER_DEAD:         return ANIM_DEATH;
     case PLAYER_WALKING:      return ANIM_WALK;
+    case PLAYER_USE:          return ANIM_USE;
     default:              return ANIM_IDLE;
   }
 }
@@ -136,6 +137,7 @@ int gameInit() {
   ani.animations[ANIM_JUMP_UP] = createAnimation(texture, 0, 896, 37, 0, 3, 128, 40, 0.3f);
   ani.animations[ANIM_JUMP_DOWN] = createAnimation(texture, 0, 768, 37, 0, 5, 128, 40, 0.3f);
   ani.animations[ANIM_WALK] = createAnimation(texture, 0, 1024, 37, 0, 8, 128, 40, 0.1f);
+  ani.animations[ANIM_USE] = createAnimation(texture, 0, 640, 37, 0, 10, 128, 40, 0.1f);
   ecsAddComponent(player, ANIMATION, (void*)&ani);
 
   ecsAddComponent(player, SPRITE, (void*)&sprite);

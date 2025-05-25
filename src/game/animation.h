@@ -14,6 +14,7 @@ typedef enum {
   ANIM_HURT,
   ANIM_DEATH,
   ANIM_WALK,
+  ANIM_USE,
   ANIM_COUNT
 } animationState_e;
 

@@ -18,6 +18,7 @@ typedef enum {
   PLAYER_JUMPING,
   PLAYER_FALLING,
   PLAYER_HURT,
+  PLAYER_USE,
   PLAYER_DEAD
 } playerState_e;
 
@@ -28,6 +29,7 @@ typedef struct {
   int selected;
   int facingLeft;
   playerState_e state;
+  double useTimer;
 } player_t;
 
 typedef void (*use_cb)(world_t *world, player_t *player, vec2 usePos);
