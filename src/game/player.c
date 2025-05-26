@@ -1,11 +1,9 @@
 #include "player.h"
 #include "ecs.h"
 #include "item.h"
-#include "texture.h"
 #include "world.h"
 #include "components.h"
 #include "physics.h"
-#include "../platform/sprite.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -56,7 +54,10 @@ void swordHitCallback(entity_t trigger, entity_t other) {
   physics_t *physics = (physics_t*)ecsGetComponent(trigger, PHYSICS);
   if (physics->owner != other) {
     printf("callback called with %d for other\n", other);
-    // damage the other
+    health_t *health = (health_t*)ecsGetComponent(other, HEALTH);
+    int temp = health->value;
+    health->value -= 25;
+    printf("damaged %d health %d -> %d\n", other, temp, health->value);
   }
 }
 
@@ -81,10 +82,6 @@ void swordAttack(world_t *world, player_t *player, vec2 usePos) {
   vec2 hitboxSize = {2.0f, 2.0f};
 
   entity_t sword = ecsCreateEntity();
-
-  texture_t texture = loadTexture("assets/image.png");
-  sprite_t sprite = createSprite(1, 1, hitboxSize.x, hitboxSize.y, 0, texture.id);
-  ecsAddComponent(sword, SPRITE, (void*)&sprite);
 
   transform_t transform = {0};
   transform.pos = hitboxPos;

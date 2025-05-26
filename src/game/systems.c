@@ -286,11 +286,13 @@ void aiSystem(double dt) {
   int count = 0;
   unsigned long sig = ecsGetSignature(TRANSFORM) | ecsGetSignature(PHYSICS) | ecsGetSignature(AI);
   entity_t *entities = ecsQuery(sig, &count);
+  printf("ai system count: %d\n", count);
   for (int i = 0; i < count; i++) {
     entity_t entity = entities[i];
     transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
     physics_t *physics = (physics_t*)ecsGetComponent(entity, PHYSICS);
     ai_t *ai = (ai_t*)ecsGetComponent(entity, AI);
+    health_t *health = (health_t*)ecsGetComponent(entity, HEALTH);
 
     int grounded = onGround(physics->body);
     vec2 vel = getVelocity(physics->body);
@@ -301,6 +303,17 @@ void aiSystem(double dt) {
 
     if (ai->cooldown > 0) {
       ai->cooldown -= dt;
+      continue;
+    }
+
+    if (health->value <= 0) {
+      if (ai->state == AI_DEAD) {
+        removeBody(physics->body);
+        ecsDeleteEntity(entity);
+      } else {
+        ai->state = AI_DEAD;
+        ai->cooldown = 2.8f;
+      }
       continue;
     }
 

@@ -86,6 +86,9 @@ void spawnSlime(entity_t target) {
   ani.animations[ANIM_JUMP_LAND] = createAnimation(
     loadTexture("assets/slime/Slime Enemy/Jump/Sprite Sheet - Green Jump Land.png"),
     0, 0, 0, 0, 6, 96, 32, 0.3f);
+  ani.animations[ANIM_DEATH] = createAnimation(
+    loadTexture("assets/slime/Slime Enemy/Death/Sprite Sheet - Green Death.png"),
+    0, 0, 0, 0, 14, 96, 32, 0.2f);
 
   // ANIM_HURT,
   // ANIM_DEATH,
@@ -196,7 +199,6 @@ int gameFrame(double dt, input_t *input, output_t *output) {
 
   if (state == STATE_PLAYING) {
     cooldownSystem(dt);
-    aiSystem(dt);
     refreshPhysicsEntities(&gameState.camera, &gameState.world);
 
     accumulatedPhysics += dt;
@@ -206,6 +208,7 @@ int gameFrame(double dt, input_t *input, output_t *output) {
       triggerSystem();
       accumulatedPhysics -= fixedDelta;
     }
+    aiSystem(dt);
     lifetimeSystem(dt);
     // pick up tiles near player
     pickupItems(&gameState.player);

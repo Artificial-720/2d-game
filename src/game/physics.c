@@ -117,8 +117,24 @@ void removeTrigger(unsigned int id) {
 }
 
 
-// void removeBody(unsigned int id) {
-// }
+void removeBody(unsigned int id) {
+  printf("removing body                   %d\n", id);
+  unsigned int index;
+  int found = 0;
+  for (unsigned int i = 0; i < bodyCount; i++) {
+    if (id == bodies[i].id) {
+      index = i;
+      found = 1;
+      break;
+    }
+  }
+  assert(found);
+
+  bodyCount--;
+  for (unsigned int i = index; i < bodyCount; i++) {
+    bodies[i] = bodies[i + 1];
+  }
+}
 
 static int indexOf(unsigned int id, unsigned int *index) {
   for (unsigned int i = 0; i < staticCount; i++) {
