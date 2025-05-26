@@ -12,6 +12,7 @@ typedef enum {
   ITEM_PICKAXE,
   ITEM_AXE,
   ITEM_DOOR,
+  ITEM_SWORD,
 } item_e;
 
 typedef struct {

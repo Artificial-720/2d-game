@@ -19,6 +19,7 @@ typedef enum {
   PLAYER_FALLING,
   PLAYER_HURT,
   PLAYER_USE,
+  PLAYER_ATTACKING,
   PLAYER_DEAD
 } playerState_e;
 

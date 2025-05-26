@@ -7,16 +7,42 @@
 #include "../core/math.h"
 
 enum component_id {
-  TRANSFORM, SPRITE, PHYSICS, UI, PICKUP, ANIMATION, AI, COOLDOWN
+  TRANSFORM,
+  SPRITE,
+  PHYSICS,
+  UI,
+  PICKUP,
+  ANIMATION,
+  AI,
+  COOLDOWN,
+  LIFETIME,
+  HEALTH,
+  COMBAT
 };
+
+typedef struct {
+  int value;
+  int max;
+} health_t;
+
+typedef struct {
+  int damage;
+  double cooldown;
+  double attackTime;
+} combat_t;
 
 typedef struct {
   vec2 pos;
 } transform_t;
 
+typedef void (*trigger_cb_t)(entity_t trigger, entity_t other);
+
 typedef struct {
   unsigned int body;
   int isStatic;
+  int isTrigger;
+  trigger_cb_t callback;
+  entity_t owner;
 } physics_t;
 
 // typedef struct {
@@ -47,5 +73,8 @@ typedef struct {
   int facingLeft;
 } ai_t;
 
+typedef struct {
+  double remaining;
+} lifetime_t;
 
 #endif

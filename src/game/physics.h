@@ -3,6 +3,15 @@
 
 #include "../core/math.h"
 
+typedef struct {
+  unsigned int trigger;
+  unsigned int other;
+  int onEnter;
+} triggerEvent_t;
+
+triggerEvent_t *getTriggerEvents(int *count);
+
+
 void physicsInit();
 void physicsCleanup();
 void physicsStep(double dt);
@@ -12,7 +21,9 @@ unsigned int createBody(vec2 pos, vec2 size); // with a collider
 unsigned int createBodyNoCollider(vec2 pos); // no collider just moves and ignores everything
 // has a transform and collider
 unsigned int createStaticBody(vec2 pos, vec2 size);
+unsigned int createTrigger(vec2 pos, vec2 size);
 
+void removeTrigger(unsigned int id);
 void removeBody(unsigned int id);
 void removeStaticbody(unsigned int id);
 

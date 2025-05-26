@@ -1,6 +1,11 @@
 #include "player.h"
+#include "ecs.h"
 #include "item.h"
+#include "texture.h"
 #include "world.h"
+#include "components.h"
+#include "physics.h"
+#include "../platform/sprite.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -47,6 +52,56 @@ void breakBlockBackground(world_t *world, player_t *player, vec2 usePos) {
   (void)player;
 }
 
+void swordHitCallback(entity_t trigger, entity_t other) {
+  physics_t *physics = (physics_t*)ecsGetComponent(trigger, PHYSICS);
+  if (physics->owner != other) {
+    printf("callback called with %d for other\n", other);
+    // damage the other
+  }
+}
+
+void swordAttack(world_t *world, player_t *player, vec2 usePos) {
+  if (player->state != PLAYER_IDLE) return;
+  combat_t *combat = (combat_t*)ecsGetComponent(player->entity, COMBAT);
+
+  if (!combat) return;
+  if (combat->cooldown > 0) return;
+
+  printf("attacking\n");
+  player->state = PLAYER_ATTACKING;
+  combat->cooldown += combat->attackTime;
+
+
+  // spawn sword hit box
+  transform_t *tf = (transform_t*)ecsGetComponent(player->entity, TRANSFORM);
+
+  vec2 hitboxOffset = {0};
+  hitboxOffset.x = player->facingLeft ? -2.0f : 2.0f;
+  vec2 hitboxPos = vec2Add(tf->pos, hitboxOffset);
+  vec2 hitboxSize = {2.0f, 2.0f};
+
+  entity_t sword = ecsCreateEntity();
+
+  texture_t texture = loadTexture("assets/image.png");
+  sprite_t sprite = createSprite(1, 1, hitboxSize.x, hitboxSize.y, 0, texture.id);
+  ecsAddComponent(sword, SPRITE, (void*)&sprite);
+
+  transform_t transform = {0};
+  transform.pos = hitboxPos;
+  ecsAddComponent(sword, TRANSFORM, (void*)&transform);
+
+  physics_t p = {.body = 0, .isStatic = 0, .isTrigger = 1, .callback = swordHitCallback, .owner = player->entity};
+  p.body = createTrigger(hitboxPos, hitboxSize);
+  ecsAddComponent(sword, PHYSICS, (void*)&p);
+
+  lifetime_t lifetime = {.remaining = 0.5f};
+  ecsAddComponent(sword, LIFETIME, (void*)&lifetime);
+
+
+  (void)world;
+  (void)usePos;
+}
+
 
 
 use_cb getUseItem(item_e item) {
@@ -60,6 +115,8 @@ use_cb getUseItem(item_e item) {
       return breakBlockForeground;
     case ITEM_AXE:
       return breakBlockBackground;
+    case ITEM_SWORD:
+      return swordAttack;
     default:
       return 0;
   }

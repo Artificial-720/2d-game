@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t *input, output_t *output) {
   // Pause the game
@@ -42,7 +43,7 @@ state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t
     }
   } else {
     velocity.x = 0.0f;
-    if (player->state != PLAYER_USE) {
+    if (player->state != PLAYER_USE && player->state != PLAYER_ATTACKING) {
       player->state = PLAYER_IDLE;
     }
   }
@@ -66,6 +67,11 @@ state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t
     player->state = PLAYER_JUMPING;
   }
 
+  // end attack
+  combat_t *combat = (combat_t*)ecsGetComponent(player->entity, COMBAT);
+  if (player->state == PLAYER_ATTACKING && combat->cooldown <= 0.0f) {
+    player->state = PLAYER_IDLE;
+  }
 
   // hot bar selection
   if (input->keyStates[KEY_1] == KEY_PRESS) {
@@ -96,8 +102,8 @@ state_e inputPlaying(player_t *player, camera_t *camera, world_t *world, input_t
     use_cb use = getUseItem(player->inventory[player->selected].item);
     if (use) {
       use(world, player, (vec2){worldPos.x, worldPos.y});
+      // player->state = PLAYER_USE;
     }
-    player->state = PLAYER_USE;
   }
   if (input->mouseStates[MOUSE_BUTTON_RIGHT] == KEY_PRESS) {
     // vec4 worldPos = screenToWorld(camera, input->mouseX, input->mouseY);
@@ -116,6 +122,74 @@ state_e inputPause(input_t *input) {
     return STATE_PLAYING;
   }
   return STATE_PAUSE;
+}
+
+void lifetimeSystem(double dt) {
+  int count = 0;
+  unsigned long sig = ecsGetSignature(LIFETIME);
+  entity_t *entities = ecsQuery(sig, &count);
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    lifetime_t *lifetime = (lifetime_t*)ecsGetComponent(entity, LIFETIME);
+    lifetime->remaining -= dt;
+    if (lifetime->remaining <= 0.0f) {
+      printf("lifetime ran out deleting entity %d\n", entity);
+
+      if (ecsHasComponent(entity, PHYSICS)) {
+        physics_t *physics = (physics_t*)ecsGetComponent(entity, PHYSICS);
+        if (physics->isTrigger) {
+          removeTrigger(physics->body);
+        }
+      }
+      ecsDeleteEntity(entity);
+    }
+  }
+  free(entities);
+}
+
+void triggerSystem() {
+  int eventCount = 0;
+  triggerEvent_t *events = getTriggerEvents(&eventCount);
+
+  int count = 0;
+  unsigned long sig = ecsGetSignature(PHYSICS);
+  entity_t *entities = ecsQuery(sig, &count);
+  for (int i = 0; i < eventCount; i++) {
+    triggerEvent_t event = events[i];
+    if (!event.onEnter) continue;
+
+    // find the trigger that was "triggered"
+    trigger_cb_t callback = 0;
+    entity_t triggerEntity = 0;
+    int found = 0;
+    for (int j = 0; j < count; j++) {
+      entity_t entity = entities[j];
+      physics_t *physics = (physics_t*)ecsGetComponent(entity, PHYSICS);
+      if (!physics->isTrigger) continue;
+      if (physics->body == event.trigger) {
+        found = 1;
+        triggerEntity = entity;
+        callback = physics->callback;
+        break;
+      }
+    }
+    assert(found);
+
+    // find the other entity id
+    for (int j = 0; j < count; j++) {
+      entity_t entity = entities[j];
+      physics_t *physics = (physics_t*)ecsGetComponent(entity, PHYSICS);
+
+      if (physics->body == event.other) {
+        if (callback) {
+          callback(triggerEntity, entity);
+        }
+        break;
+      }
+    }
+  }
+
+  free(entities);
 }
 
 void animationSystem(double dt) {
@@ -146,8 +220,8 @@ void animationSystem(double dt) {
     if (ani->cooldown <= 0.0f) {
       animation_t *a = &ani->animations[ani->state];
 
-      printf("calling state for entity %d, state: %d\n", entity, ani->state);
-      printf("current frame: %d\n", a->current);
+      // printf("calling state for entity %d, state: %d\n", entity, ani->state);
+      // printf("current frame: %d\n", a->current);
 
       sprite->texture = a->texture.id;
       if (facingLeft) {
@@ -167,7 +241,7 @@ void animationSystem(double dt) {
 
 
 
-      printf("sprite x: %f y: %f width %f height %f\n", sprite->subX, sprite->subY, sprite->subWidth, sprite->subHeight);
+      // printf("sprite x: %f y: %f width %f height %f\n", sprite->subX, sprite->subY, sprite->subWidth, sprite->subHeight);
 
       a->current += 1;
       if (a->current >= a->total) {
@@ -191,6 +265,18 @@ void cooldownSystem(double dt) {
     cooldown_t *cooldown = (cooldown_t*)ecsGetComponent(entity, COOLDOWN);
     if (cooldown->time > 0.0f) {
       cooldown->time -= dt;
+    }
+  }
+  free(entities);
+
+  count = 0;
+  sig = ecsGetSignature(COMBAT);
+  entities = ecsQuery(sig, &count);
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    combat_t *combat = (combat_t*)ecsGetComponent(entity, COMBAT);
+    if (combat->cooldown > 0.0f) {
+      combat->cooldown -= dt;
     }
   }
   free(entities);
@@ -279,6 +365,7 @@ void physicsSystem(double dt) {
     transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
     physics_t *physics = (physics_t*)ecsGetComponent(entity, PHYSICS);
     if (physics->isStatic) continue;
+    if (physics->isTrigger) continue;
     transform->pos = getPosition(physics->body);
   }
   free(entities);

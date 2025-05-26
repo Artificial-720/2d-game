@@ -42,6 +42,7 @@ animationState_e playerAnimation(entity_t entity, int *facingLeft) {
     case PLAYER_DEAD:         return ANIM_DEATH;
     case PLAYER_WALKING:      return ANIM_WALK;
     case PLAYER_USE:          return ANIM_USE;
+    case PLAYER_ATTACKING:    return ANIM_ATTACK;
     default:              return ANIM_IDLE;
   }
 }
@@ -93,9 +94,8 @@ void spawnSlime(entity_t target) {
   ecsAddComponent(slime, ANIMATION, (void*)&ani);
   ecsAddComponent(slime, COOLDOWN, (void*)&c);
 
-
-
-  (void)target;
+  health_t health = {.max = 100, .value = 100};
+  ecsAddComponent(slime, HEALTH, (void*)&health);
 }
 
 
@@ -118,6 +118,9 @@ int gameInit() {
   ecsRegisterComponent(ANIMATION, sizeof(animationComponent_t));
   ecsRegisterComponent(AI, sizeof(ai_t));
   ecsRegisterComponent(COOLDOWN, sizeof(cooldown_t));
+  ecsRegisterComponent(COMBAT, sizeof(combat_t));
+  ecsRegisterComponent(LIFETIME, sizeof(lifetime_t));
+  ecsRegisterComponent(HEALTH, sizeof(health_t));
 
   gameState.player.pickupDis = 3.0f;
 
@@ -138,11 +141,17 @@ int gameInit() {
   ani.animations[ANIM_JUMP_DOWN] = createAnimation(texture, 0, 768, 37, 0, 5, 128, 40, 0.3f);
   ani.animations[ANIM_WALK] = createAnimation(texture, 0, 1024, 37, 0, 8, 128, 40, 0.1f);
   ani.animations[ANIM_USE] = createAnimation(texture, 0, 640, 37, 0, 10, 128, 40, 0.1f);
+  ani.animations[ANIM_ATTACK] = createAnimation(texture, 0, 512, 37, 0, 5, 128, 40, 0.1f);
   ecsAddComponent(player, ANIMATION, (void*)&ani);
 
   ecsAddComponent(player, SPRITE, (void*)&sprite);
   ecsAddComponent(player, TRANSFORM, (void*)&transform);
   ecsAddComponent(player, PHYSICS, (void*)&p);
+
+  combat_t combat = {0};
+  combat.attackTime = 0.5f;
+  ecsAddComponent(player, COMBAT, (void*)&combat);
+
   gameState.player.entity = player;
 
   // Setup UI entities
@@ -151,6 +160,7 @@ int gameInit() {
   // populate default inventory
   giveItemToPlayer(&gameState.player, ITEM_PICKAXE, 1);
   giveItemToPlayer(&gameState.player, ITEM_AXE, 1);
+  giveItemToPlayer(&gameState.player, ITEM_SWORD, 1);
   giveItemToPlayer(&gameState.player, ITEM_DIRT, 9);
   giveItemToPlayer(&gameState.player, ITEM_GRASS, 9);
   giveItemToPlayer(&gameState.player, ITEM_SEED, 9);
@@ -193,8 +203,10 @@ int gameFrame(double dt, input_t *input, output_t *output) {
     while (accumulatedPhysics > fixedDelta) {
       // update physics
       physicsSystem(fixedDelta);
+      triggerSystem();
       accumulatedPhysics -= fixedDelta;
     }
+    lifetimeSystem(dt);
     // pick up tiles near player
     pickupItems(&gameState.player);
 

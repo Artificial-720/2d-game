@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #define MAX_COLLISIONS 10
+#define MAX_TRIGGER_EVENTS 5
 
 typedef struct {
   vec2 velocity;
@@ -26,6 +27,12 @@ typedef struct {
 } staticBody_t;
 
 typedef struct {
+  unsigned int id;
+  vec2 pos;
+  vec2 size;
+} trigger_t;
+
+typedef struct {
   // vec3 a; // point of A into B
   // vec3 b; // point of B into A
   // vec3 normal; // b - a normalized
@@ -36,10 +43,15 @@ typedef struct {
 
 static body_t bodies[100];
 static staticBody_t staticBodies[10000];
+static trigger_t triggers[15];
 static unsigned int bodyCount = 0;
 static unsigned int staticCount = 0;
+static unsigned int triggerCount = 0;
 static int nextBodyId = 0;
 static int nextStaticId = 0;
+static int nextTriggerId = 0;
+static triggerEvent_t triggerEvents[MAX_TRIGGER_EVENTS];
+static int triggerEventCount;
 static float gravity = 9.81f;
 
 void physicsInit() {
@@ -74,6 +86,36 @@ unsigned int createStaticBody(vec2 pos, vec2 size) {
 
   return id;
 }
+
+unsigned int createTrigger(vec2 pos, vec2 size) {
+  int id = nextTriggerId++;
+  trigger_t t = {0};
+  t.pos = pos;
+  t.size = size;
+  t.id = id;
+  triggers[triggerCount++] = t;
+
+  return id;
+}
+
+void removeTrigger(unsigned int id) {
+  unsigned int index;
+  int found = 0;
+  for (unsigned int i = 0; i < triggerCount; i++) {
+    if (id == triggers[i].id) {
+      index = i;
+      found = 1;
+      break;
+    }
+  }
+  assert(found);
+
+  triggerCount--;
+  for (unsigned int i = index; i < triggerCount; i++) {
+    triggers[i] = triggers[i + 1];
+  }
+}
+
 
 // void removeBody(unsigned int id) {
 // }
@@ -147,7 +189,18 @@ int quadQuadIntersection(vec2 posA, vec2 sizeA, vec2 posB, vec2 sizeB) {
   return 0;
 }
 
+
+triggerEvent_t *getTriggerEvents(int *count) {
+  *count = triggerEventCount;
+  return triggerEvents;
+}
+
+
 void physicsStep(double dt) {
+  triggerEvent_t stepEvents[MAX_TRIGGER_EVENTS];
+  int stepEventCount = 0;
+
+
   // printf("running physics step\n");
   for (unsigned int i = 0; i < bodyCount; i++) {
     // printf("pos: %f %f dt: %f\n", bodies[i].pos.x, bodies[i].pos.y, dt);
@@ -165,9 +218,40 @@ void physicsStep(double dt) {
       if (i == j) continue;
       // TODO
     }
+
+    // check for collisions with trigger
+    for (unsigned int j = 0; j < triggerCount; j++) {
+      if (quadQuadIntersection(bodies[i].pos, bodies[i].size, triggers[j].pos, triggers[j].size)) {
+        triggerEvent_t event = {
+          .trigger = triggers[j].id,
+          .other = bodies[i].id,
+          .onEnter = 0
+        };
+
+        // check if this event existed last step
+        int found = 0;
+        for (int k = 0; k < triggerEventCount; k++) {
+          if (triggerEvents[k].trigger == event.trigger &&
+              triggerEvents[k].other == event.other) {
+            found = 1;
+            break;
+          }
+        }
+
+        if (found) {
+          // found the event from last step "on stay"
+          event.onEnter = 0;
+        } else {
+          // new event "on enter"
+          event.onEnter = 1;
+        }
+
+        stepEvents[stepEventCount++] = event;
+        if (stepEventCount >= MAX_TRIGGER_EVENTS) break;
+      }
+    }
+
     // printf("checking for collisions with static bodies\n");
-
-
     int collisionCount = 0;
     collision_t collisions[MAX_COLLISIONS] = {0};
     bodies[i].grounded = 0;
@@ -231,38 +315,16 @@ void physicsStep(double dt) {
         bodies[i].grounded = 1;
       }
 
-
-
-      // OLD ATTEMPT
-
-      // vec2 change = {0, 0};
-
-      // // resolve Y axis
-      // vec3 normY = normalize((vec3){0, bodies[i].pos.y - b.pos.y, 0});
-      // float d = distance((vec3){0,bodies[i].pos.y,0}, (vec3){0,b.pos.y,0});
-      // float expectedD = bodies[i].size.y / 2 + b.size.y / 2;
-      // change.y = normY.y * fabs(expectedD - d);
-
-      // // resolve X axis
-      // vec3 normX = normalize((vec3){bodies[i].pos.x - b.pos.x, 0, 0});
-      // float actualDisX = distance((vec3){bodies[i].pos.x, 0, 0}, (vec3){b.pos.x, 0, 0});
-      // float expectedDisX = bodies[i].size.x / 2 + b.size.x / 2;
-      // change.x = normX.x * fabs(expectedDisX - actualDisX);
-
-      // printf("change: %f %f\n", change.x, change.y);
-      // // only do one axis to resolve collision
-      // if (change.x > change.y) {
-      //   printf("apply change to Y %f<---------------------------\n", change.y);
-      //   bodies[i].pos.y += change.y;
-      //   bodies[i].rb.velocity.y = 0;
-      // } else {
-      //   printf("apply change to X %f<---------------------------\n", change.x);
-      //   bodies[i].pos.x += change.x;
-      //   bodies[i].rb.velocity.x = 0;
-      // }
     }
     // printf("clear force\n");
     bodies[i].rb.force.y = 0;
     bodies[i].rb.force.x = 0;
+  }
+
+
+  // copy data over to global
+  triggerEventCount = stepEventCount;
+  for (int i = 0; i < stepEventCount; i++) {
+    triggerEvents[i] = stepEvents[i];
   }
 }

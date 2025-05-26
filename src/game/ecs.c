@@ -31,7 +31,7 @@ int ecsInit() {
     signatures[i] = 0;
   }
 
-  maxComponents = 8;
+  maxComponents = 32;
   componentCount = 0;
   components = (component_t*)malloc(maxComponents * sizeof(component_t));
   for (int i = 0; i < maxComponents; i++) {
