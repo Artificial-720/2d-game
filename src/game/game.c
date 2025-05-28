@@ -70,6 +70,7 @@ int gameInit() {
   ecsRegisterComponent(COMBAT, sizeof(combat_t));
   ecsRegisterComponent(LIFETIME, sizeof(lifetime_t));
   ecsRegisterComponent(HEALTH, sizeof(health_t));
+  ecsRegisterComponent(CONTACT_DAMAGE, sizeof(contactDamage_t));
 
   gameState.player.pickupDis = 3.0f;
 
@@ -100,6 +101,9 @@ int gameInit() {
   combat_t combat = {0};
   combat.attackTime = 0.5f;
   ecsAddComponent(player, COMBAT, (void*)&combat);
+
+  health_t health = {.max = 100, .value = 100};
+  ecsAddComponent(player, HEALTH, (void*)&health);
 
   gameState.player.entity = player;
 
@@ -146,6 +150,8 @@ int gameFrame(double dt, input_t *input, output_t *output) {
   if (state == STATE_PLAYING) {
     cooldownSystem(dt);
     refreshPhysicsEntities(&gameState.camera, &gameState.world);
+
+    contactDamageSystem();
 
     accumulatedPhysics += dt;
     while (accumulatedPhysics > fixedDelta) {

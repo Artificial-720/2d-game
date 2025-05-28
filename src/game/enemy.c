@@ -1,4 +1,5 @@
 #include "enemy.h"
+#include "ecs.h"
 #include "physics.h"
 #include "components.h"
 #include "../platform/sprite.h"
@@ -53,4 +54,7 @@ void spawnSlime(entity_t target) {
 
   health_t health = {.max = 100, .value = 100};
   ecsAddComponent(slime, HEALTH, (void*)&health);
+
+  contactDamage_t damage = {.damage = 10};
+  ecsAddComponent(slime, CONTACT_DAMAGE, (void*)&damage);
 }

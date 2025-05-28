@@ -11,6 +11,13 @@ typedef struct {
 
 triggerEvent_t *getTriggerEvents(int *count);
 
+typedef struct {
+  unsigned int a;
+  unsigned int b;
+} contactEvent_t;
+
+contactEvent_t *getContactEvents(int *count);
+
 
 void physicsInit();
 void physicsCleanup();

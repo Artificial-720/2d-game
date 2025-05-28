@@ -17,8 +17,13 @@ enum component_id {
   COOLDOWN,
   LIFETIME,
   HEALTH,
+  CONTACT_DAMAGE,
   COMBAT
 };
+
+typedef struct {
+  int damage;
+} contactDamage_t;
 
 typedef struct {
   int value;

@@ -5,6 +5,7 @@
 
 #define MAX_COLLISIONS 10
 #define MAX_TRIGGER_EVENTS 5
+#define MAX_CONTACTS 10
 
 typedef struct {
   vec2 velocity;
@@ -53,6 +54,8 @@ static int nextTriggerId = 0;
 static triggerEvent_t triggerEvents[MAX_TRIGGER_EVENTS];
 static int triggerEventCount;
 static float gravity = 9.81f;
+static contactEvent_t contactEvents[MAX_CONTACTS];
+static int contactCount;
 
 void physicsInit() {
 }
@@ -211,8 +214,19 @@ triggerEvent_t *getTriggerEvents(int *count) {
   return triggerEvents;
 }
 
+contactEvent_t *getContactEvents(int *count) {
+  *count = contactCount;
+  return contactEvents;
+}
+
+
+
+
+
 
 void physicsStep(double dt) {
+  contactCount = 0;
+
   triggerEvent_t stepEvents[MAX_TRIGGER_EVENTS];
   int stepEventCount = 0;
 
@@ -232,7 +246,16 @@ void physicsStep(double dt) {
     // printf("checking for collisions with dynamic bodies\n");
     for (unsigned int j = 0; j < bodyCount; j++) {
       if (i == j) continue;
-      // TODO
+      if (i < j) continue; // prevent double check
+
+      if (quadQuadIntersection(bodies[i].pos, bodies[i].size, bodies[j].pos, bodies[j].size)) {
+        contactEvent_t event = {
+          .a = bodies[i].id,
+          .b = bodies[j].id
+        };
+        contactEvents[contactCount++] = event;
+        if (contactCount >= MAX_CONTACTS) break;
+      }
     }
 
     // check for collisions with trigger

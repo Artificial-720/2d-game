@@ -286,7 +286,6 @@ void aiSystem(double dt) {
   int count = 0;
   unsigned long sig = ecsGetSignature(TRANSFORM) | ecsGetSignature(PHYSICS) | ecsGetSignature(AI);
   entity_t *entities = ecsQuery(sig, &count);
-  printf("ai system count: %d\n", count);
   for (int i = 0; i < count; i++) {
     entity_t entity = entities[i];
     transform_t *transform = (transform_t*)ecsGetComponent(entity, TRANSFORM);
@@ -444,4 +443,53 @@ void updateCameras(entity_t player, camera_t *camera, camera_t *cameraUi, input_
   cameraUi->width = input->windowWidth;
   cameraUi->height = input->windowHeight;
   cameraUi->projection = orthographic(0, input->windowWidth, input->windowHeight, 0, 0, 1);
+}
+
+void contactDamageSystem() {
+  int eventCount = 0;
+  contactEvent_t *events = getContactEvents(&eventCount);
+  if (!eventCount) return;
+
+  int count = 0;
+  unsigned long sig = ecsGetSignature(PHYSICS);
+  entity_t *entities = ecsQuery(sig, &count);
+
+  for (int i = 0; i < eventCount; i++) {
+    const contactEvent_t event = events[i];
+
+    entity_t entityA = 0;
+    entity_t entityB = 0;
+
+    // find id of A and B
+    for (int j = 0; j < count; j++) {
+      entity_t entity = entities[j];
+      physics_t *physics = (physics_t*)ecsGetComponent(entity, PHYSICS);
+      if (event.a == physics->body) {
+        entityA = entity;
+      } else if (event.b == physics->body) {
+        entityB = entity;
+      }
+    }
+
+    // couldnt find one of them
+    if (!entityA || !entityB) continue;
+
+    // now check if either has contact damage
+    // a damages b
+    if (ecsHasComponent(entityA, CONTACT_DAMAGE) && ecsHasComponent(entityB, HEALTH)) {
+      contactDamage_t *damage = (contactDamage_t*)ecsGetComponent(entityA, CONTACT_DAMAGE);
+      health_t *health = (health_t*)ecsGetComponent(entityB, HEALTH);
+      health->value -= damage->damage;
+      printf("%d health of B: %d\n", entityB, health->value);
+    }
+    // b damages a
+    if (ecsHasComponent(entityB, CONTACT_DAMAGE) && ecsHasComponent(entityA, HEALTH)) {
+      contactDamage_t *damage = (contactDamage_t*)ecsGetComponent(entityB, CONTACT_DAMAGE);
+      health_t *health = (health_t*)ecsGetComponent(entityA, HEALTH);
+      health->value -= damage->damage;
+      printf("%d health of A: %d\n", entityA, health->value);
+    }
+  }
+
+  free(entities);
 }
