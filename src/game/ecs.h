@@ -12,6 +12,7 @@ entity_t ecsCreateEntity();
 void ecsDeleteEntity(entity_t entity);
 // Add a component to a entity with optional initial data
 void ecsAddComponent(entity_t entity, int component, void *data);
+void ecsRemoveComponent(entity_t entity, int component);
 void ecsRegisterComponent(int component, unsigned long nbytes);
 void *ecsGetComponent(entity_t entity, int component);
 int ecsEntityExists(entity_t entity);

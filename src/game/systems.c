@@ -329,6 +329,7 @@ void aiSystem(double dt) {
       } else {
         ai->state = AI_DEAD;
         ai->cooldown = 2.8f;
+        ecsRemoveComponent(entity, CONTACT_DAMAGE);
       }
       continue;
     }

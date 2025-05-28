@@ -106,6 +106,15 @@ void ecsDeleteEntity(entity_t entity) {
   entityCount--;
 }
 
+void ecsRemoveComponent(entity_t entity, int component) {
+  assert(components);
+  assert(component >= 0 && component < maxComponents);
+  entity_t value = entitiesMap[entity];
+  // update signature
+  signatures[value] &= ~ecsGetSignature(component);
+  assert(!ecsHasComponent(entity, component));
+}
+
 void ecsAddComponent(entity_t entity, int component, void *data) {
   assert(components);
   assert(component >= 0 && component < maxComponents);
@@ -121,6 +130,7 @@ void ecsAddComponent(entity_t entity, int component, void *data) {
 
   // update signature
   signatures[value] |= ecsGetSignature(component);
+  assert(ecsHasComponent(entity, component));
 }
 
 void *ecsGetComponent(entity_t entity, int component) {
