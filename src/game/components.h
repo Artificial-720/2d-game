@@ -26,8 +26,10 @@ typedef struct {
 } contactDamage_t;
 
 typedef struct {
-  int value;
   int max;
+  int value;
+  int invincible;
+  double invincibilityTimer;
 } health_t;
 
 typedef struct {

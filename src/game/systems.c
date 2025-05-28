@@ -280,6 +280,23 @@ void cooldownSystem(double dt) {
     }
   }
   free(entities);
+
+
+  count = 0;
+  sig = ecsGetSignature(HEALTH);
+  entities = ecsQuery(sig, &count);
+  for (int i = 0; i < count; i++) {
+    entity_t entity = entities[i];
+    health_t *health = (health_t*)ecsGetComponent(entity, HEALTH);
+    if (health->invincibilityTimer > 0.0f) {
+      health->invincibilityTimer -= dt;
+      if (health->invincibilityTimer <= 0.0f) {
+        health->invincibilityTimer = 0.0f;
+        health->invincible = 0;
+      }
+    }
+  }
+  free(entities);
 }
 
 void aiSystem(double dt) {
@@ -479,15 +496,23 @@ void contactDamageSystem() {
     if (ecsHasComponent(entityA, CONTACT_DAMAGE) && ecsHasComponent(entityB, HEALTH)) {
       contactDamage_t *damage = (contactDamage_t*)ecsGetComponent(entityA, CONTACT_DAMAGE);
       health_t *health = (health_t*)ecsGetComponent(entityB, HEALTH);
-      health->value -= damage->damage;
-      printf("%d health of B: %d\n", entityB, health->value);
+      if (!health->invincible) {
+        health->value -= damage->damage;
+        health->invincible = 1;
+        health->invincibilityTimer = 0.6f;
+        printf("%d health of B: %d\n", entityB, health->value);
+      }
     }
     // b damages a
     if (ecsHasComponent(entityB, CONTACT_DAMAGE) && ecsHasComponent(entityA, HEALTH)) {
       contactDamage_t *damage = (contactDamage_t*)ecsGetComponent(entityB, CONTACT_DAMAGE);
       health_t *health = (health_t*)ecsGetComponent(entityA, HEALTH);
-      health->value -= damage->damage;
-      printf("%d health of A: %d\n", entityA, health->value);
+      if (!health->invincible) {
+        health->value -= damage->damage;
+        health->invincible = 1;
+        health->invincibilityTimer = 0.6f;
+        printf("%d health of A: %d\n", entityA, health->value);
+      }
     }
   }
 
