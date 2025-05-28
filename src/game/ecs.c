@@ -180,11 +180,7 @@ int ecsHasComponent(entity_t entity, int component) {
   assert(components);
   assert(component >= 0 && component < maxComponents);
   entity_t value = entitiesMap[entity];
-
-  char *componentData = (char*)components[component].data;
-  componentData += value * components[component].nbytes;
-
-  return componentData ? 1 : 0;
+  return (ecsGetSignature(component) & signatures[value]) ? 1 : 0;
 }
 
 
